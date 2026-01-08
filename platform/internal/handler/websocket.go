@@ -1,4 +1,4 @@
-package api
+package handler
 
 import (
 	"context"
@@ -52,15 +52,15 @@ type WSError struct {
 	Message string `json:"message"`
 }
 
-// Proxy handles WebSocket to gRPC proxying
-type Proxy struct {
+// WebSocketHandler handles WebSocket connections for agent streaming
+type WebSocketHandler struct {
 	manager  *agent.Manager
 	upgrader websocket.Upgrader
 }
 
-// NewProxy creates a new WebSocket proxy
-func NewProxy(manager *agent.Manager) *Proxy {
-	return &Proxy{
+// NewWebSocketHandler creates a new WebSocket handler
+func NewWebSocketHandler(manager *agent.Manager) *WebSocketHandler {
+	return &WebSocketHandler{
 		manager: manager,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
@@ -71,12 +71,17 @@ func NewProxy(manager *agent.Manager) *Proxy {
 	}
 }
 
-// HandleWebSocket handles the WebSocket connection and proxies to gRPC
-func (p *Proxy) HandleWebSocket(c echo.Context) error {
+// Register registers WebSocket routes
+func (h *WebSocketHandler) Register(e *echo.Echo) {
+	e.GET("/api/v1/agents/:id/stream", h.HandleStream)
+}
+
+// HandleStream handles the WebSocket connection and proxies to gRPC
+func (h *WebSocketHandler) HandleStream(c echo.Context) error {
 	agentID := c.Param("id")
 
 	// Upgrade to WebSocket
-	ws, err := p.upgrader.Upgrade(c.Response(), c.Request(), nil)
+	ws, err := h.upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
 		return err
 	}
@@ -86,9 +91,9 @@ func (p *Proxy) HandleWebSocket(c echo.Context) error {
 	defer cancel()
 
 	// Connect to agent
-	conn, err := p.manager.ConnectToAgent(ctx, agentID)
+	conn, err := h.manager.ConnectToAgent(ctx, agentID)
 	if err != nil {
-		p.sendError(ws, "", "AGENT_UNAVAILABLE", err.Error())
+		h.sendError(ws, "", "AGENT_UNAVAILABLE", err.Error())
 		return nil
 	}
 
@@ -113,13 +118,13 @@ func (p *Proxy) HandleWebSocket(c echo.Context) error {
 
 			var wsMsg WSMessage
 			if err := json.Unmarshal(message, &wsMsg); err != nil {
-				p.sendError(ws, "", "INVALID_MESSAGE", "invalid message format")
+				h.sendError(ws, "", "INVALID_MESSAGE", "invalid message format")
 				continue
 			}
 
-			cmd, err := p.wsToGRPC(wsMsg)
+			cmd, err := h.wsToGRPC(wsMsg)
 			if err != nil {
-				p.sendError(ws, wsMsg.RequestID, "INVALID_COMMAND", err.Error())
+				h.sendError(ws, wsMsg.RequestID, "INVALID_COMMAND", err.Error())
 				continue
 			}
 
@@ -144,7 +149,7 @@ func (p *Proxy) HandleWebSocket(c echo.Context) error {
 				return
 			}
 
-			wsMsg, err := p.grpcToWS(event)
+			wsMsg, err := h.grpcToWS(event)
 			if err != nil {
 				continue // Skip malformed events
 			}
@@ -171,7 +176,7 @@ func (p *Proxy) HandleWebSocket(c echo.Context) error {
 	return nil
 }
 
-func (p *Proxy) wsToGRPC(msg WSMessage) (*agentv1.AgentCommand, error) {
+func (h *WebSocketHandler) wsToGRPC(msg WSMessage) (*agentv1.AgentCommand, error) {
 	cmd := &agentv1.AgentCommand{
 		RequestId: msg.RequestID,
 	}
@@ -189,12 +194,6 @@ func (p *Proxy) wsToGRPC(msg WSMessage) (*agentv1.AgentCommand, error) {
 		}
 
 	case WSTypeCatchUp:
-		var payload WSCatchUpRequest
-		if err := json.Unmarshal(msg.Payload, &payload); err != nil {
-			return nil, err
-		}
-		// Note: CatchUp is a unary RPC, but we support it through the stream for convenience
-		// The actual catch-up should use the REST endpoint
 		return nil, fmt.Errorf("catch_up should use REST endpoint")
 
 	case WSTypeInterrupt:
@@ -203,7 +202,6 @@ func (p *Proxy) wsToGRPC(msg WSMessage) (*agentv1.AgentCommand, error) {
 		}
 
 	case WSTypeStatus:
-		// Status should use REST endpoint
 		return nil, fmt.Errorf("status should use REST endpoint")
 
 	default:
@@ -213,7 +211,7 @@ func (p *Proxy) wsToGRPC(msg WSMessage) (*agentv1.AgentCommand, error) {
 	return cmd, nil
 }
 
-func (p *Proxy) grpcToWS(event *agentv1.AgentEvent) (WSMessage, error) {
+func (h *WebSocketHandler) grpcToWS(event *agentv1.AgentEvent) (WSMessage, error) {
 	wsMsg := WSMessage{
 		RequestID: event.RequestId,
 	}
@@ -256,7 +254,7 @@ func (p *Proxy) grpcToWS(event *agentv1.AgentEvent) (WSMessage, error) {
 	return wsMsg, nil
 }
 
-func (p *Proxy) sendError(ws *websocket.Conn, requestID, code, message string) {
+func (h *WebSocketHandler) sendError(ws *websocket.Conn, requestID, code, message string) {
 	errPayload, _ := json.Marshal(WSError{Code: code, Message: message})
 	wsMsg := WSMessage{
 		Type:      WSTypeError,

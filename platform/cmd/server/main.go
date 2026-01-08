@@ -1,47 +1,31 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
+	"go.uber.org/fx"
+	"go.uber.org/fx/fxevent"
+	"go.uber.org/zap"
 
 	"github.com/forge/platform/internal/agent"
-	"github.com/forge/platform/internal/api"
 	"github.com/forge/platform/internal/config"
+	"github.com/forge/platform/internal/handler"
+	"github.com/forge/platform/internal/logger"
+	"github.com/forge/platform/internal/server"
 )
 
 func main() {
-	log.Println("Starting Forge Platform...")
+	fx.New(
+		// Provide config
+		fx.Provide(config.New),
 
-	// Load configuration
-	cfg := config.Load()
-	log.Printf("Port: %d", cfg.Port)
+		// Core modules
+		logger.Module,
+		agent.Module,
+		server.Module,
+		handler.Module,
 
-	// Initialize components
-	registry := agent.NewRegistry()
-	manager := agent.NewManager(registry)
-
-	// Create and start server
-	server := api.NewServer(manager, registry)
-
-	// Handle graceful shutdown
-	go func() {
-		sigCh := make(chan os.Signal, 1)
-		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-		<-sigCh
-
-		log.Println("Shutting down...")
-		if err := server.Shutdown(); err != nil {
-			log.Printf("Error during shutdown: %v", err)
-		}
-	}()
-
-	// Start server
-	addr := fmt.Sprintf(":%d", cfg.Port)
-	log.Printf("Server listening on %s", addr)
-	if err := server.Start(addr); err != nil {
-		log.Fatalf("Server error: %v", err)
-	}
+		// Configure fx logging
+		fx.WithLogger(func(log *zap.Logger) fxevent.Logger {
+			return &fxevent.ZapLogger{Logger: log}
+		}),
+	).Run()
 }

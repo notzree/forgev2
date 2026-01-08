@@ -1,4 +1,4 @@
-package api
+package handler
 
 import (
 	"net/http"
@@ -7,26 +7,37 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/forge/platform/internal/agent"
+	"github.com/forge/platform/internal/errors"
 )
 
-// Handlers contains all HTTP handlers
-type Handlers struct {
+// AgentHandler handles agent management endpoints
+type AgentHandler struct {
 	manager  *agent.Manager
 	registry *agent.Registry
 }
 
-// NewHandlers creates a new handlers instance
-func NewHandlers(manager *agent.Manager, registry *agent.Registry) *Handlers {
-	return &Handlers{
+// NewAgentHandler creates a new agent handler
+func NewAgentHandler(manager *agent.Manager, registry *agent.Registry) *AgentHandler {
+	return &AgentHandler{
 		manager:  manager,
 		registry: registry,
 	}
 }
 
+// Register registers agent routes
+func (h *AgentHandler) Register(e *echo.Echo) {
+	g := e.Group("/api/v1/agents")
+	g.POST("", h.Create)
+	g.GET("", h.List)
+	g.GET("/:id", h.Get)
+	g.DELETE("/:id", h.Delete)
+	g.GET("/:id/messages", h.GetMessages)
+}
+
 // CreateAgentRequest is the request body for creating an agent
 type CreateAgentRequest struct {
 	OwnerID string `json:"owner_id"`
-	Address string `json:"address"` // For now, we need the agent address; later K8s will provide this
+	Address string `json:"address"`
 }
 
 // AgentResponse is the response for agent operations
@@ -54,30 +65,30 @@ func agentInfoToResponse(info *agent.Info) AgentResponse {
 	}
 }
 
-// CreateAgent handles POST /api/v1/agents
-func (h *Handlers) CreateAgent(c echo.Context) error {
+// Create handles POST /api/v1/agents
+func (h *AgentHandler) Create(c echo.Context) error {
 	var req CreateAgentRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+		return errors.BadRequest("invalid request body")
 	}
 
 	if req.OwnerID == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "owner_id is required")
+		return errors.BadRequest("owner_id is required")
 	}
 	if req.Address == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "address is required")
+		return errors.BadRequest("address is required")
 	}
 
 	info, err := h.manager.CreateAgent(c.Request().Context(), req.OwnerID, req.Address)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusServiceUnavailable, err.Error())
+		return errors.ServiceUnavailable(err.Error())
 	}
 
 	return c.JSON(http.StatusCreated, agentInfoToResponse(info))
 }
 
-// ListAgents handles GET /api/v1/agents
-func (h *Handlers) ListAgents(c echo.Context) error {
+// List handles GET /api/v1/agents
+func (h *AgentHandler) List(c echo.Context) error {
 	ownerID := c.QueryParam("owner_id")
 
 	var agents []*agent.Info
@@ -98,13 +109,13 @@ func (h *Handlers) ListAgents(c echo.Context) error {
 	})
 }
 
-// GetAgent handles GET /api/v1/agents/:id
-func (h *Handlers) GetAgent(c echo.Context) error {
+// Get handles GET /api/v1/agents/:id
+func (h *AgentHandler) Get(c echo.Context) error {
 	agentID := c.Param("id")
 
 	info, exists := h.registry.Get(agentID)
 	if !exists {
-		return echo.NewHTTPError(http.StatusNotFound, "agent not found")
+		return errors.NotFound("agent not found")
 	}
 
 	// Optionally refresh status from agent
@@ -119,20 +130,20 @@ func (h *Handlers) GetAgent(c echo.Context) error {
 	return c.JSON(http.StatusOK, agentInfoToResponse(info))
 }
 
-// DeleteAgent handles DELETE /api/v1/agents/:id
-func (h *Handlers) DeleteAgent(c echo.Context) error {
+// Delete handles DELETE /api/v1/agents/:id
+func (h *AgentHandler) Delete(c echo.Context) error {
 	agentID := c.Param("id")
 	graceful := c.QueryParam("graceful") != "false" // default to graceful
 
 	if err := h.manager.DeleteAgent(c.Request().Context(), agentID, graceful); err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		return errors.NotFound(err.Error())
 	}
 
 	return c.NoContent(http.StatusNoContent)
 }
 
 // GetMessages handles GET /api/v1/agents/:id/messages
-func (h *Handlers) GetMessages(c echo.Context) error {
+func (h *AgentHandler) GetMessages(c echo.Context) error {
 	agentID := c.Param("id")
 
 	fromSeq := int64(0)
@@ -152,14 +163,14 @@ func (h *Handlers) GetMessages(c echo.Context) error {
 	// Check if agent exists
 	info, exists := h.registry.Get(agentID)
 	if !exists {
-		return echo.NewHTTPError(http.StatusNotFound, "agent not found")
+		return errors.NotFound("agent not found")
 	}
 
 	// If agent is running, get messages from it
 	if info.State == agent.StateRunning {
 		resp, err := h.manager.CatchUp(c.Request().Context(), agentID, fromSeq, limit)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusServiceUnavailable, err.Error())
+			return errors.ServiceUnavailable(err.Error())
 		}
 
 		return c.JSON(http.StatusOK, map[string]interface{}{
@@ -176,18 +187,5 @@ func (h *Handlers) GetMessages(c echo.Context) error {
 		"latest_seq": info.LatestSeq,
 		"has_more":   false,
 		"source":     "cache",
-	})
-}
-
-// Healthz handles GET /healthz
-func (h *Handlers) Healthz(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
-}
-
-// Readyz handles GET /readyz
-func (h *Handlers) Readyz(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"status":      "ready",
-		"agent_count": h.registry.Count(),
 	})
 }
