@@ -110,25 +110,6 @@ func (m *Manager) GetStatus(ctx context.Context, agentID string) (*agentv1.GetSt
 	return resp.Msg, nil
 }
 
-// CatchUp retrieves messages from an agent since a given sequence number
-func (m *Manager) CatchUp(ctx context.Context, agentID string, fromSeq int64, limit int32) (*agentv1.CatchUpResponse, error) {
-	info, exists := m.registry.Get(agentID)
-	if !exists {
-		return nil, fmt.Errorf("agent not found: %s", agentID)
-	}
-
-	client := info.GetClient()
-	resp, err := client.CatchUp(ctx, connect.NewRequest(&agentv1.CatchUpRequest{
-		FromSeq: fromSeq,
-		Limit:   limit,
-	}))
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.Msg, nil
-}
-
 // ConnectToAgent establishes a bidirectional stream with an agent
 func (m *Manager) ConnectToAgent(ctx context.Context, agentID string) (*StreamConnection, error) {
 	info, exists := m.registry.Get(agentID)

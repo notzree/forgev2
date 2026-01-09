@@ -16,10 +16,6 @@ service AgentService {
   // GetStatus returns the current agent status (unary RPC for simple queries).
   rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
 
-  // CatchUp retrieves messages since a given sequence number.
-  // Used for reconnection scenarios.
-  rpc CatchUp(CatchUpRequest) returns (CatchUpResponse);
-
   // Shutdown gracefully terminates the agent.
   rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
 }
@@ -40,7 +36,7 @@ message SendMessageCommand {
   string content = 1;
   repeated Attachment attachments = 2;
 }
-
+// TODO (richard): Support object storage instead of passing it through rpc stream
 message Attachment {
   string filename = 1;
   string mime_type = 2;
@@ -62,7 +58,7 @@ message AgentEvent {
   string request_id = 1; // Correlates to the command that triggered this event
 
   oneof event {
-    AgentMessage message = 10;
+    Message message = 10;
     AckEvent ack = 11;
     ErrorEvent error = 12;
   }
@@ -97,18 +93,6 @@ enum AgentState {
   AGENT_STATE_IDLE = 1;
   AGENT_STATE_PROCESSING = 2;
   AGENT_STATE_ERROR = 3;
-}
-
-// CatchUp
-message CatchUpRequest {
-  int64 from_seq = 1; // Get messages where seq > from_seq
-  int32 limit = 2;    // Max messages to return (0 = no limit)
-}
-
-message CatchUpResponse {
-  repeated AgentMessage messages = 1;
-  int64 latest_seq = 2;
-  bool has_more = 3;
 }
 
 // Shutdown

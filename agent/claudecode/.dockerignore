@@ -1,0 +1,39 @@
+# Dependencies (will be installed fresh in container)
+node_modules
+
+# Build outputs
+dist
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs
+
+# Environment files (secrets should be passed at runtime)
+.env
+.env.*
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Documentation
+README.md
+*.md
+
+# Tests
+coverage
+.nyc_output

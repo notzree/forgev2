@@ -6,7 +6,7 @@ option go_package = "github.com/forge/platform/gen/agent/v1;agentv1";
 
 // AgentMessage represents a message in the conversation.
 // Maps closely to Claude Agent SDK's SDKMessage types.
-message AgentMessage {
+message Message {
   string uuid = 1;
   string session_id = 2;
   int64 seq = 3;           // Monotonic sequence number for ordering

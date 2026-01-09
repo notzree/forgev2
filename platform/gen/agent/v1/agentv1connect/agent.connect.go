@@ -37,8 +37,6 @@ const (
 	AgentServiceConnectProcedure = "/agent.v1.AgentService/Connect"
 	// AgentServiceGetStatusProcedure is the fully-qualified name of the AgentService's GetStatus RPC.
 	AgentServiceGetStatusProcedure = "/agent.v1.AgentService/GetStatus"
-	// AgentServiceCatchUpProcedure is the fully-qualified name of the AgentService's CatchUp RPC.
-	AgentServiceCatchUpProcedure = "/agent.v1.AgentService/CatchUp"
 	// AgentServiceShutdownProcedure is the fully-qualified name of the AgentService's Shutdown RPC.
 	AgentServiceShutdownProcedure = "/agent.v1.AgentService/Shutdown"
 )
@@ -50,9 +48,6 @@ type AgentServiceClient interface {
 	Connect(context.Context) *connect.BidiStreamForClient[v1.AgentCommand, v1.AgentEvent]
 	// GetStatus returns the current agent status (unary RPC for simple queries).
 	GetStatus(context.Context, *connect.Request[v1.GetStatusRequest]) (*connect.Response[v1.GetStatusResponse], error)
-	// CatchUp retrieves messages since a given sequence number.
-	// Used for reconnection scenarios.
-	CatchUp(context.Context, *connect.Request[v1.CatchUpRequest]) (*connect.Response[v1.CatchUpResponse], error)
 	// Shutdown gracefully terminates the agent.
 	Shutdown(context.Context, *connect.Request[v1.ShutdownRequest]) (*connect.Response[v1.ShutdownResponse], error)
 }
@@ -80,12 +75,6 @@ func NewAgentServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(agentServiceMethods.ByName("GetStatus")),
 			connect.WithClientOptions(opts...),
 		),
-		catchUp: connect.NewClient[v1.CatchUpRequest, v1.CatchUpResponse](
-			httpClient,
-			baseURL+AgentServiceCatchUpProcedure,
-			connect.WithSchema(agentServiceMethods.ByName("CatchUp")),
-			connect.WithClientOptions(opts...),
-		),
 		shutdown: connect.NewClient[v1.ShutdownRequest, v1.ShutdownResponse](
 			httpClient,
 			baseURL+AgentServiceShutdownProcedure,
@@ -99,7 +88,6 @@ func NewAgentServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 type agentServiceClient struct {
 	connect   *connect.Client[v1.AgentCommand, v1.AgentEvent]
 	getStatus *connect.Client[v1.GetStatusRequest, v1.GetStatusResponse]
-	catchUp   *connect.Client[v1.CatchUpRequest, v1.CatchUpResponse]
 	shutdown  *connect.Client[v1.ShutdownRequest, v1.ShutdownResponse]
 }
 
@@ -111,11 +99,6 @@ func (c *agentServiceClient) Connect(ctx context.Context) *connect.BidiStreamFor
 // GetStatus calls agent.v1.AgentService.GetStatus.
 func (c *agentServiceClient) GetStatus(ctx context.Context, req *connect.Request[v1.GetStatusRequest]) (*connect.Response[v1.GetStatusResponse], error) {
 	return c.getStatus.CallUnary(ctx, req)
-}
-
-// CatchUp calls agent.v1.AgentService.CatchUp.
-func (c *agentServiceClient) CatchUp(ctx context.Context, req *connect.Request[v1.CatchUpRequest]) (*connect.Response[v1.CatchUpResponse], error) {
-	return c.catchUp.CallUnary(ctx, req)
 }
 
 // Shutdown calls agent.v1.AgentService.Shutdown.
@@ -130,9 +113,6 @@ type AgentServiceHandler interface {
 	Connect(context.Context, *connect.BidiStream[v1.AgentCommand, v1.AgentEvent]) error
 	// GetStatus returns the current agent status (unary RPC for simple queries).
 	GetStatus(context.Context, *connect.Request[v1.GetStatusRequest]) (*connect.Response[v1.GetStatusResponse], error)
-	// CatchUp retrieves messages since a given sequence number.
-	// Used for reconnection scenarios.
-	CatchUp(context.Context, *connect.Request[v1.CatchUpRequest]) (*connect.Response[v1.CatchUpResponse], error)
 	// Shutdown gracefully terminates the agent.
 	Shutdown(context.Context, *connect.Request[v1.ShutdownRequest]) (*connect.Response[v1.ShutdownResponse], error)
 }
@@ -156,12 +136,6 @@ func NewAgentServiceHandler(svc AgentServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(agentServiceMethods.ByName("GetStatus")),
 		connect.WithHandlerOptions(opts...),
 	)
-	agentServiceCatchUpHandler := connect.NewUnaryHandler(
-		AgentServiceCatchUpProcedure,
-		svc.CatchUp,
-		connect.WithSchema(agentServiceMethods.ByName("CatchUp")),
-		connect.WithHandlerOptions(opts...),
-	)
 	agentServiceShutdownHandler := connect.NewUnaryHandler(
 		AgentServiceShutdownProcedure,
 		svc.Shutdown,
@@ -174,8 +148,6 @@ func NewAgentServiceHandler(svc AgentServiceHandler, opts ...connect.HandlerOpti
 			agentServiceConnectHandler.ServeHTTP(w, r)
 		case AgentServiceGetStatusProcedure:
 			agentServiceGetStatusHandler.ServeHTTP(w, r)
-		case AgentServiceCatchUpProcedure:
-			agentServiceCatchUpHandler.ServeHTTP(w, r)
 		case AgentServiceShutdownProcedure:
 			agentServiceShutdownHandler.ServeHTTP(w, r)
 		default:
@@ -193,10 +165,6 @@ func (UnimplementedAgentServiceHandler) Connect(context.Context, *connect.BidiSt
 
 func (UnimplementedAgentServiceHandler) GetStatus(context.Context, *connect.Request[v1.GetStatusRequest]) (*connect.Response[v1.GetStatusResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("agent.v1.AgentService.GetStatus is not implemented"))
-}
-
-func (UnimplementedAgentServiceHandler) CatchUp(context.Context, *connect.Request[v1.CatchUpRequest]) (*connect.Response[v1.CatchUpResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("agent.v1.AgentService.CatchUp is not implemented"))
 }
 
 func (UnimplementedAgentServiceHandler) Shutdown(context.Context, *connect.Request[v1.ShutdownRequest]) (*connect.Response[v1.ShutdownResponse], error) {

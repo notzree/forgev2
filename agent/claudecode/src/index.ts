@@ -1,5 +1,5 @@
-import { loadConfig } from "./config.js";
-import { createServer } from "./services/grpc-server.js";
+import { loadConfig } from "./config.ts";
+import { createServer } from "./services/grpc-server.ts";
 
 async function main() {
   console.log("Starting Forge Agent...");

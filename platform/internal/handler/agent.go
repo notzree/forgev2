@@ -166,22 +166,10 @@ func (h *AgentHandler) GetMessages(c echo.Context) error {
 		return errors.NotFound("agent not found")
 	}
 
-	// If agent is running, get messages from it
-	if info.State == agent.StateRunning {
-		resp, err := h.manager.CatchUp(c.Request().Context(), agentID, fromSeq, limit)
-		if err != nil {
-			return errors.ServiceUnavailable(err.Error())
-		}
-
-		return c.JSON(http.StatusOK, map[string]interface{}{
-			"messages":   resp.Messages,
-			"latest_seq": resp.LatestSeq,
-			"has_more":   resp.HasMore,
-			"source":     "agent",
-		})
-	}
-
-	// TODO: Fall back to Turso for offline agents
+	// TODO: Implement CatchUp RPC in proto and agent to fetch messages
+	// For now, return cached info
+	_ = fromSeq
+	_ = limit
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"messages":   []interface{}{},
 		"latest_seq": info.LatestSeq,

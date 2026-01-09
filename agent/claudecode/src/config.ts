@@ -1,5 +1,4 @@
 export interface AgentConfig {
-  agentId: string;
   port: number;
   cwd: string;
   model?: string;
@@ -17,7 +16,6 @@ export function loadConfig(): AgentConfig {
   }
 
   return {
-    agentId,
     port: parseInt(process.env.PORT || "8080", 10),
     cwd: process.env.AGENT_CWD || process.cwd(),
     model: process.env.CLAUDE_MODEL || "claude-sonnet-4-20250514",

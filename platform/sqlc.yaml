@@ -1,0 +1,98 @@
+# Override types can be found here:
+# https://github.com/sqlc-dev/sqlc/blob/main/internal/codegen/golang/postgresql_type.go
+version: "2"
+sql:
+  - schema: "./pkg/db/migrations"
+    queries: "./pkg/db/queries"
+    engine: "postgresql"
+    gen:
+      go:
+        package: "sqlc"
+        out: "pkg/db/sqlc"
+        sql_package: "pgx/v5"
+        emit_interface: true
+        emit_empty_slices: true
+        emit_params_struct_pointers: true
+        emit_result_struct_pointers: true
+        emit_json_tags: true
+        overrides:
+          # UUID
+          - db_type: "uuid"
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"
+          - db_type: "uuid"
+            nullable: true
+            go_type:
+              import: "github.com/google/uuid"
+              type: "NullUUID"
+          # NullUUID - This is only used in queries, e.g. UNNEST(@foo_ids::NullUUID[])
+          # Don't use this in migration files.
+          - db_type: "nulluuid"
+            go_type:
+              import: "github.com/jackc/pgx/v5/pgtype"
+              type: "UUID"
+          # NullInteger - This is only used in queries, e.g. UNNEST(@foo_ids::NULLINTEGER[])
+          # Don't use this in migration files.
+          - db_type: "nullinteger"
+            go_type:
+              import: "github.com/jackc/pgx/v5/pgtype"
+              type: "Int4"
+          # NullBigInt - This is only used in queries, e.g. UNNEST(@foo_ids::NULLBIGINT[])
+          # Don't use this in migration files.
+          - db_type: "nullbigint"
+            go_type:
+              import: "github.com/jackc/pgx/v5/pgtype"
+              type: "Int8"
+          # NullTimestamptz - This is only used in queries, e.g. UNNEST(@foo_timestamps::NULLTIMESTAMPTZ[])
+          # Don't use this in migration files.
+          - db_type: "nulltimestamptz"
+            go_type:
+              import: "github.com/jackc/pgx/v5/pgtype"
+              type: "Timestamptz"
+          # Strings
+          - db_type: "pg_catalog.varchar"
+            go_type:
+              type: "string"
+          - db_type: "pg_catalog.varchar"
+            nullable: true
+            go_type:
+              import: "database/sql"
+              type: "NullString"
+          - db_type: "text"
+            nullable: true
+            go_type:
+              import: "database/sql"
+              type: "NullString"
+          # nulltext - This is only used in queries, e.g. UNNEST(@foo_ids::NULLTEXT[])
+          # Don't use this in migration files.
+          - db_type: "nulltext"
+            go_type:
+              import: "github.com/jackc/pgx/v5/pgtype"
+              type: "Text"
+          # Decimal
+          - db_type: "pg_catalog.numeric"
+            go_type:
+              import: "github.com/shopspring/decimal"
+              type: "Decimal"
+          - db_type: "pg_catalog.numeric"
+            nullable: true
+            go_type:
+              import: "github.com/shopspring/decimal"
+              type: "NullDecimal"
+          # NullDecimal - This is only used in queries, e.g. UNNEST(@foo_ids::NULLDECIMAL[])
+          # Don't use this in migration files.
+          - db_type: "nulldecimal"
+            go_type:
+              import: "github.com/jackc/pgx/v5/pgtype"
+              type: "Numeric"
+          # Timestamp
+          - db_type: "timestamptz"
+            go_type:
+              import: "time"
+              type: "Time"
+          - db_type: "timestamptz"
+            nullable: true
+            go_type:
+              import: "database/sql"
+              type: "NullTime"

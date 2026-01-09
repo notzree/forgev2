@@ -10,12 +10,19 @@ import (
 
 // AppError is a structured application error
 type AppError struct {
-	Code      int    `json:"-"`
-	ErrorCode string `json:"error"`
-	Message   string `json:"message"`
+	Code           int    `json:"-"`
+	ErrorCode      string `json:"error"`
+	DisplayMessage string `json:"display_message,omitempty"`
+	Message        string `json:"message"`
 }
 
 func (e *AppError) Error() string { return e.Message }
+
+// WithDisplayMessage sets a user-facing display message on the error
+func (e *AppError) WithDisplayMessage(displayMsg string) *AppError {
+	e.DisplayMessage = displayMsg
+	return e
+}
 
 // NotFound creates a 404 error
 func NotFound(msg string) *AppError {
@@ -32,14 +39,14 @@ func Unauthorized(msg string) *AppError {
 	return &AppError{Code: http.StatusUnauthorized, ErrorCode: "unauthorized", Message: msg}
 }
 
-// ServiceUnavailable creates a 503 error
-func ServiceUnavailable(msg string) *AppError {
-	return &AppError{Code: http.StatusServiceUnavailable, ErrorCode: "service_unavailable", Message: msg}
-}
-
 // InternalError creates a 500 error
 func InternalError(msg string) *AppError {
 	return &AppError{Code: http.StatusInternalServerError, ErrorCode: "internal_server_error", Message: msg}
+}
+
+// ServiceUnavailable creates a 503 error
+func ServiceUnavailable(msg string) *AppError {
+	return &AppError{Code: http.StatusServiceUnavailable, ErrorCode: "service_unavailable", Message: msg}
 }
 
 // HTTPErrorHandler returns a custom Echo error handler

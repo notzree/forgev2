@@ -248,6 +248,7 @@ func (x *SendMessageCommand) GetAttachments() []*Attachment {
 	return nil
 }
 
+// TODO (richard): Support object storage instead of passing it through rpc stream
 type Attachment struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Filename      string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
@@ -490,7 +491,7 @@ func (x *AgentEvent) GetEvent() isAgentEvent_Event {
 	return nil
 }
 
-func (x *AgentEvent) GetMessage() *AgentMessage {
+func (x *AgentEvent) GetMessage() *Message {
 	if x != nil {
 		if x, ok := x.Event.(*AgentEvent_Message); ok {
 			return x.Message
@@ -522,7 +523,7 @@ type isAgentEvent_Event interface {
 }
 
 type AgentEvent_Message struct {
-	Message *AgentMessage `protobuf:"bytes,10,opt,name=message,proto3,oneof"`
+	Message *Message `protobuf:"bytes,10,opt,name=message,proto3,oneof"`
 }
 
 type AgentEvent_Ack struct {
@@ -780,119 +781,6 @@ func (x *GetStatusResponse) GetUptimeMs() int64 {
 	return 0
 }
 
-// CatchUp
-type CatchUpRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FromSeq       int64                  `protobuf:"varint,1,opt,name=from_seq,json=fromSeq,proto3" json:"from_seq,omitempty"` // Get messages where seq > from_seq
-	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`                    // Max messages to return (0 = no limit)
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CatchUpRequest) Reset() {
-	*x = CatchUpRequest{}
-	mi := &file_agent_v1_agent_proto_msgTypes[11]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CatchUpRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CatchUpRequest) ProtoMessage() {}
-
-func (x *CatchUpRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_v1_agent_proto_msgTypes[11]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CatchUpRequest.ProtoReflect.Descriptor instead.
-func (*CatchUpRequest) Descriptor() ([]byte, []int) {
-	return file_agent_v1_agent_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *CatchUpRequest) GetFromSeq() int64 {
-	if x != nil {
-		return x.FromSeq
-	}
-	return 0
-}
-
-func (x *CatchUpRequest) GetLimit() int32 {
-	if x != nil {
-		return x.Limit
-	}
-	return 0
-}
-
-type CatchUpResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Messages      []*AgentMessage        `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
-	LatestSeq     int64                  `protobuf:"varint,2,opt,name=latest_seq,json=latestSeq,proto3" json:"latest_seq,omitempty"`
-	HasMore       bool                   `protobuf:"varint,3,opt,name=has_more,json=hasMore,proto3" json:"has_more,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CatchUpResponse) Reset() {
-	*x = CatchUpResponse{}
-	mi := &file_agent_v1_agent_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CatchUpResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CatchUpResponse) ProtoMessage() {}
-
-func (x *CatchUpResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_v1_agent_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CatchUpResponse.ProtoReflect.Descriptor instead.
-func (*CatchUpResponse) Descriptor() ([]byte, []int) {
-	return file_agent_v1_agent_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *CatchUpResponse) GetMessages() []*AgentMessage {
-	if x != nil {
-		return x.Messages
-	}
-	return nil
-}
-
-func (x *CatchUpResponse) GetLatestSeq() int64 {
-	if x != nil {
-		return x.LatestSeq
-	}
-	return 0
-}
-
-func (x *CatchUpResponse) GetHasMore() bool {
-	if x != nil {
-		return x.HasMore
-	}
-	return false
-}
-
 // Shutdown
 type ShutdownRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -903,7 +791,7 @@ type ShutdownRequest struct {
 
 func (x *ShutdownRequest) Reset() {
 	*x = ShutdownRequest{}
-	mi := &file_agent_v1_agent_proto_msgTypes[13]
+	mi := &file_agent_v1_agent_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -915,7 +803,7 @@ func (x *ShutdownRequest) String() string {
 func (*ShutdownRequest) ProtoMessage() {}
 
 func (x *ShutdownRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_v1_agent_proto_msgTypes[13]
+	mi := &file_agent_v1_agent_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -928,7 +816,7 @@ func (x *ShutdownRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShutdownRequest.ProtoReflect.Descriptor instead.
 func (*ShutdownRequest) Descriptor() ([]byte, []int) {
-	return file_agent_v1_agent_proto_rawDescGZIP(), []int{13}
+	return file_agent_v1_agent_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ShutdownRequest) GetGraceful() bool {
@@ -947,7 +835,7 @@ type ShutdownResponse struct {
 
 func (x *ShutdownResponse) Reset() {
 	*x = ShutdownResponse{}
-	mi := &file_agent_v1_agent_proto_msgTypes[14]
+	mi := &file_agent_v1_agent_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -959,7 +847,7 @@ func (x *ShutdownResponse) String() string {
 func (*ShutdownResponse) ProtoMessage() {}
 
 func (x *ShutdownResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_v1_agent_proto_msgTypes[14]
+	mi := &file_agent_v1_agent_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -972,7 +860,7 @@ func (x *ShutdownResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShutdownResponse.ProtoReflect.Descriptor instead.
 func (*ShutdownResponse) Descriptor() ([]byte, []int) {
-	return file_agent_v1_agent_proto_rawDescGZIP(), []int{14}
+	return file_agent_v1_agent_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ShutdownResponse) GetSuccess() bool {
@@ -1008,13 +896,13 @@ const file_agent_v1_agent_proto_rawDesc = "" +
 	"\x18SetPermissionModeCommand\x12\x12\n" +
 	"\x04mode\x18\x01 \x01(\tR\x04mode\"'\n" +
 	"\x0fSetModelCommand\x12\x14\n" +
-	"\x05model\x18\x01 \x01(\tR\x05model\"\xbe\x01\n" +
+	"\x05model\x18\x01 \x01(\tR\x05model\"\xb9\x01\n" +
 	"\n" +
 	"AgentEvent\x12\x1d\n" +
 	"\n" +
-	"request_id\x18\x01 \x01(\tR\trequestId\x122\n" +
+	"request_id\x18\x01 \x01(\tR\trequestId\x12-\n" +
 	"\amessage\x18\n" +
-	" \x01(\v2\x16.agent.v1.AgentMessageH\x00R\amessage\x12&\n" +
+	" \x01(\v2\x11.agent.v1.MessageH\x00R\amessage\x12&\n" +
 	"\x03ack\x18\v \x01(\v2\x12.agent.v1.AckEventH\x00R\x03ack\x12,\n" +
 	"\x05error\x18\f \x01(\v2\x14.agent.v1.ErrorEventH\x00R\x05errorB\a\n" +
 	"\x05event\">\n" +
@@ -1036,15 +924,7 @@ const file_agent_v1_agent_proto_rawDesc = "" +
 	"latest_seq\x18\x04 \x01(\x03R\tlatestSeq\x12#\n" +
 	"\rcurrent_model\x18\x05 \x01(\tR\fcurrentModel\x12'\n" +
 	"\x0fpermission_mode\x18\x06 \x01(\tR\x0epermissionMode\x12\x1b\n" +
-	"\tuptime_ms\x18\a \x01(\x03R\buptimeMs\"A\n" +
-	"\x0eCatchUpRequest\x12\x19\n" +
-	"\bfrom_seq\x18\x01 \x01(\x03R\afromSeq\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x05R\x05limit\"\x7f\n" +
-	"\x0fCatchUpResponse\x122\n" +
-	"\bmessages\x18\x01 \x03(\v2\x16.agent.v1.AgentMessageR\bmessages\x12\x1d\n" +
-	"\n" +
-	"latest_seq\x18\x02 \x01(\x03R\tlatestSeq\x12\x19\n" +
-	"\bhas_more\x18\x03 \x01(\bR\ahasMore\"-\n" +
+	"\tuptime_ms\x18\a \x01(\x03R\buptimeMs\"-\n" +
 	"\x0fShutdownRequest\x12\x1a\n" +
 	"\bgraceful\x18\x01 \x01(\bR\bgraceful\",\n" +
 	"\x10ShutdownResponse\x12\x18\n" +
@@ -1054,11 +934,10 @@ const file_agent_v1_agent_proto_rawDesc = "" +
 	"\x17AGENT_STATE_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10AGENT_STATE_IDLE\x10\x01\x12\x1a\n" +
 	"\x16AGENT_STATE_PROCESSING\x10\x02\x12\x15\n" +
-	"\x11AGENT_STATE_ERROR\x10\x032\x94\x02\n" +
+	"\x11AGENT_STATE_ERROR\x10\x032\xd4\x01\n" +
 	"\fAgentService\x12;\n" +
 	"\aConnect\x12\x16.agent.v1.AgentCommand\x1a\x14.agent.v1.AgentEvent(\x010\x01\x12D\n" +
-	"\tGetStatus\x12\x1a.agent.v1.GetStatusRequest\x1a\x1b.agent.v1.GetStatusResponse\x12>\n" +
-	"\aCatchUp\x12\x18.agent.v1.CatchUpRequest\x1a\x19.agent.v1.CatchUpResponse\x12A\n" +
+	"\tGetStatus\x12\x1a.agent.v1.GetStatusRequest\x1a\x1b.agent.v1.GetStatusResponse\x12A\n" +
 	"\bShutdown\x12\x19.agent.v1.ShutdownRequest\x1a\x1a.agent.v1.ShutdownResponseB0Z.github.com/forge/platform/gen/agent/v1;agentv1b\x06proto3"
 
 var (
@@ -1074,7 +953,7 @@ func file_agent_v1_agent_proto_rawDescGZIP() []byte {
 }
 
 var file_agent_v1_agent_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_agent_v1_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_agent_v1_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_agent_v1_agent_proto_goTypes = []any{
 	(AgentState)(0),                  // 0: agent.v1.AgentState
 	(*AgentCommand)(nil),             // 1: agent.v1.AgentCommand
@@ -1088,11 +967,9 @@ var file_agent_v1_agent_proto_goTypes = []any{
 	(*ErrorEvent)(nil),               // 9: agent.v1.ErrorEvent
 	(*GetStatusRequest)(nil),         // 10: agent.v1.GetStatusRequest
 	(*GetStatusResponse)(nil),        // 11: agent.v1.GetStatusResponse
-	(*CatchUpRequest)(nil),           // 12: agent.v1.CatchUpRequest
-	(*CatchUpResponse)(nil),          // 13: agent.v1.CatchUpResponse
-	(*ShutdownRequest)(nil),          // 14: agent.v1.ShutdownRequest
-	(*ShutdownResponse)(nil),         // 15: agent.v1.ShutdownResponse
-	(*AgentMessage)(nil),             // 16: agent.v1.AgentMessage
+	(*ShutdownRequest)(nil),          // 12: agent.v1.ShutdownRequest
+	(*ShutdownResponse)(nil),         // 13: agent.v1.ShutdownResponse
+	(*Message)(nil),                  // 14: agent.v1.Message
 }
 var file_agent_v1_agent_proto_depIdxs = []int32{
 	2,  // 0: agent.v1.AgentCommand.send_message:type_name -> agent.v1.SendMessageCommand
@@ -1100,24 +977,21 @@ var file_agent_v1_agent_proto_depIdxs = []int32{
 	5,  // 2: agent.v1.AgentCommand.set_permission_mode:type_name -> agent.v1.SetPermissionModeCommand
 	6,  // 3: agent.v1.AgentCommand.set_model:type_name -> agent.v1.SetModelCommand
 	3,  // 4: agent.v1.SendMessageCommand.attachments:type_name -> agent.v1.Attachment
-	16, // 5: agent.v1.AgentEvent.message:type_name -> agent.v1.AgentMessage
+	14, // 5: agent.v1.AgentEvent.message:type_name -> agent.v1.Message
 	8,  // 6: agent.v1.AgentEvent.ack:type_name -> agent.v1.AckEvent
 	9,  // 7: agent.v1.AgentEvent.error:type_name -> agent.v1.ErrorEvent
 	0,  // 8: agent.v1.GetStatusResponse.state:type_name -> agent.v1.AgentState
-	16, // 9: agent.v1.CatchUpResponse.messages:type_name -> agent.v1.AgentMessage
-	1,  // 10: agent.v1.AgentService.Connect:input_type -> agent.v1.AgentCommand
-	10, // 11: agent.v1.AgentService.GetStatus:input_type -> agent.v1.GetStatusRequest
-	12, // 12: agent.v1.AgentService.CatchUp:input_type -> agent.v1.CatchUpRequest
-	14, // 13: agent.v1.AgentService.Shutdown:input_type -> agent.v1.ShutdownRequest
-	7,  // 14: agent.v1.AgentService.Connect:output_type -> agent.v1.AgentEvent
-	11, // 15: agent.v1.AgentService.GetStatus:output_type -> agent.v1.GetStatusResponse
-	13, // 16: agent.v1.AgentService.CatchUp:output_type -> agent.v1.CatchUpResponse
-	15, // 17: agent.v1.AgentService.Shutdown:output_type -> agent.v1.ShutdownResponse
-	14, // [14:18] is the sub-list for method output_type
-	10, // [10:14] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	1,  // 9: agent.v1.AgentService.Connect:input_type -> agent.v1.AgentCommand
+	10, // 10: agent.v1.AgentService.GetStatus:input_type -> agent.v1.GetStatusRequest
+	12, // 11: agent.v1.AgentService.Shutdown:input_type -> agent.v1.ShutdownRequest
+	7,  // 12: agent.v1.AgentService.Connect:output_type -> agent.v1.AgentEvent
+	11, // 13: agent.v1.AgentService.GetStatus:output_type -> agent.v1.GetStatusResponse
+	13, // 14: agent.v1.AgentService.Shutdown:output_type -> agent.v1.ShutdownResponse
+	12, // [12:15] is the sub-list for method output_type
+	9,  // [9:12] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_agent_v1_agent_proto_init() }
@@ -1143,7 +1017,7 @@ func file_agent_v1_agent_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_agent_v1_agent_proto_rawDesc), len(file_agent_v1_agent_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   15,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

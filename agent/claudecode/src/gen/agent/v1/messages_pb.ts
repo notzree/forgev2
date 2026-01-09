@@ -4,21 +4,21 @@
 
 import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Message } from "@bufbuild/protobuf";
+import type { Message as Message$1 } from "@bufbuild/protobuf";
 
 /**
  * Describes the file agent/v1/messages.proto.
  */
 export const file_agent_v1_messages: GenFile = /*@__PURE__*/
-  fileDesc("ChdhZ2VudC92MS9tZXNzYWdlcy5wcm90bxIIYWdlbnQudjEi2QIKDEFnZW50TWVzc2FnZRIMCgR1dWlkGAEgASgJEhIKCnNlc3Npb25faWQYAiABKAkSCwoDc2VxGAMgASgDEhIKCmNyZWF0ZWRfYXQYBCABKAMSLQoMdXNlcl9tZXNzYWdlGAogASgLMhUuYWdlbnQudjEuVXNlck1lc3NhZ2VIABI3ChFhc3Npc3RhbnRfbWVzc2FnZRgLIAEoCzIaLmFnZW50LnYxLkFzc2lzdGFudE1lc3NhZ2VIABIxCg5zeXN0ZW1fbWVzc2FnZRgMIAEoCzIXLmFnZW50LnYxLlN5c3RlbU1lc3NhZ2VIABItCgxzdHJlYW1fZXZlbnQYDSABKAsyFS5hZ2VudC52MS5TdHJlYW1FdmVudEgAEjEKDnJlc3VsdF9tZXNzYWdlGA4gASgLMhcuYWdlbnQudjEuUmVzdWx0TWVzc2FnZUgAQgkKB3BheWxvYWQiUgoLVXNlck1lc3NhZ2USDwoHY29udGVudBgBIAEoCRIyChJhZGRpdGlvbmFsX2NvbnRlbnQYAiADKAsyFi5hZ2VudC52MS5Db250ZW50QmxvY2sicwoQQXNzaXN0YW50TWVzc2FnZRInCgdjb250ZW50GAEgAygLMhYuYWdlbnQudjEuQ29udGVudEJsb2NrEh8KEnBhcmVudF90b29sX3VzZV9pZBgCIAEoCUgAiAEBQhUKE19wYXJlbnRfdG9vbF91c2VfaWQi7gEKDENvbnRlbnRCbG9jaxIjCgR0ZXh0GAEgASgLMhMuYWdlbnQudjEuVGV4dEJsb2NrSAASKgoIdG9vbF91c2UYAiABKAsyFi5hZ2VudC52MS5Ub29sVXNlQmxvY2tIABIwCgt0b29sX3Jlc3VsdBgDIAEoCzIZLmFnZW50LnYxLlRvb2xSZXN1bHRCbG9ja0gAEisKCHRoaW5raW5nGAQgASgLMhcuYWdlbnQudjEuVGhpbmtpbmdCbG9ja0gAEiUKBWltYWdlGAUgASgLMhQuYWdlbnQudjEuSW1hZ2VCbG9ja0gAQgcKBWJsb2NrIhkKCVRleHRCbG9jaxIMCgR0ZXh0GAEgASgJIjwKDFRvb2xVc2VCbG9jaxIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhIKCmlucHV0X2pzb24YAyABKAkiTgoPVG9vbFJlc3VsdEJsb2NrEhMKC3Rvb2xfdXNlX2lkGAEgASgJEhQKDGNvbnRlbnRfanNvbhgCIAEoCRIQCghpc19lcnJvchgDIAEoCCI0Cg1UaGlua2luZ0Jsb2NrEhAKCHRoaW5raW5nGAEgASgJEhEKCXNpZ25hdHVyZRgCIAEoCSIuCgpJbWFnZUJsb2NrEhIKCm1lZGlhX3R5cGUYASABKAkSDAoEZGF0YRgCIAEoDCLoAQoNU3lzdGVtTWVzc2FnZRIPCgdzdWJ0eXBlGAEgASgJEhAKA2N3ZBgKIAEoCUgAiAEBEg0KBXRvb2xzGAsgAygJEhIKBW1vZGVsGAwgASgJSAGIAQESHAoPcGVybWlzc2lvbl9tb2RlGA0gASgJSAKIAQESOAoQY29tcGFjdF9tZXRhZGF0YRgUIAEoCzIZLmFnZW50LnYxLkNvbXBhY3RNZXRhZGF0YUgDiAEBQgYKBF9jd2RCCAoGX21vZGVsQhIKEF9wZXJtaXNzaW9uX21vZGVCEwoRX2NvbXBhY3RfbWV0YWRhdGEiNgoPQ29tcGFjdE1ldGFkYXRhEg8KB3RyaWdnZXIYASABKAkSEgoKcHJlX3Rva2VucxgCIAEoBSJtCgtTdHJlYW1FdmVudBISCgpldmVudF90eXBlGAEgASgJEhIKCmV2ZW50X2pzb24YAiABKAkSHwoScGFyZW50X3Rvb2xfdXNlX2lkGAMgASgJSACIAQFCFQoTX3BhcmVudF90b29sX3VzZV9pZCLbAQoNUmVzdWx0TWVzc2FnZRIPCgdzdWJ0eXBlGAEgASgJEhAKCGlzX2Vycm9yGAIgASgIEhMKBnJlc3VsdBgDIAEoCUgAiAEBEhYKDnRvdGFsX2Nvc3RfdXNkGAQgASgBEhEKCW51bV90dXJucxgFIAEoBRITCgtkdXJhdGlvbl9tcxgGIAEoAxIXCg9kdXJhdGlvbl9hcGlfbXMYByABKAMSHgoFdXNhZ2UYCCABKAsyDy5hZ2VudC52MS5Vc2FnZRIOCgZlcnJvcnMYCSADKAlCCQoHX3Jlc3VsdCJ6CgVVc2FnZRIUCgxpbnB1dF90b2tlbnMYASABKAUSFQoNb3V0cHV0X3Rva2VucxgCIAEoBRIfChdjYWNoZV9yZWFkX2lucHV0X3Rva2VucxgDIAEoBRIjChtjYWNoZV9jcmVhdGlvbl9pbnB1dF90b2tlbnMYBCABKAVCMFouZ2l0aHViLmNvbS9mb3JnZS9wbGF0Zm9ybS9nZW4vYWdlbnQvdjE7YWdlbnR2MWIGcHJvdG8z");
+  fileDesc("ChdhZ2VudC92MS9tZXNzYWdlcy5wcm90bxIIYWdlbnQudjEi1AIKB01lc3NhZ2USDAoEdXVpZBgBIAEoCRISCgpzZXNzaW9uX2lkGAIgASgJEgsKA3NlcRgDIAEoAxISCgpjcmVhdGVkX2F0GAQgASgDEi0KDHVzZXJfbWVzc2FnZRgKIAEoCzIVLmFnZW50LnYxLlVzZXJNZXNzYWdlSAASNwoRYXNzaXN0YW50X21lc3NhZ2UYCyABKAsyGi5hZ2VudC52MS5Bc3Npc3RhbnRNZXNzYWdlSAASMQoOc3lzdGVtX21lc3NhZ2UYDCABKAsyFy5hZ2VudC52MS5TeXN0ZW1NZXNzYWdlSAASLQoMc3RyZWFtX2V2ZW50GA0gASgLMhUuYWdlbnQudjEuU3RyZWFtRXZlbnRIABIxCg5yZXN1bHRfbWVzc2FnZRgOIAEoCzIXLmFnZW50LnYxLlJlc3VsdE1lc3NhZ2VIAEIJCgdwYXlsb2FkIlIKC1VzZXJNZXNzYWdlEg8KB2NvbnRlbnQYASABKAkSMgoSYWRkaXRpb25hbF9jb250ZW50GAIgAygLMhYuYWdlbnQudjEuQ29udGVudEJsb2NrInMKEEFzc2lzdGFudE1lc3NhZ2USJwoHY29udGVudBgBIAMoCzIWLmFnZW50LnYxLkNvbnRlbnRCbG9jaxIfChJwYXJlbnRfdG9vbF91c2VfaWQYAiABKAlIAIgBAUIVChNfcGFyZW50X3Rvb2xfdXNlX2lkIu4BCgxDb250ZW50QmxvY2sSIwoEdGV4dBgBIAEoCzITLmFnZW50LnYxLlRleHRCbG9ja0gAEioKCHRvb2xfdXNlGAIgASgLMhYuYWdlbnQudjEuVG9vbFVzZUJsb2NrSAASMAoLdG9vbF9yZXN1bHQYAyABKAsyGS5hZ2VudC52MS5Ub29sUmVzdWx0QmxvY2tIABIrCgh0aGlua2luZxgEIAEoCzIXLmFnZW50LnYxLlRoaW5raW5nQmxvY2tIABIlCgVpbWFnZRgFIAEoCzIULmFnZW50LnYxLkltYWdlQmxvY2tIAEIHCgVibG9jayIZCglUZXh0QmxvY2sSDAoEdGV4dBgBIAEoCSI8CgxUb29sVXNlQmxvY2sSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRISCgppbnB1dF9qc29uGAMgASgJIk4KD1Rvb2xSZXN1bHRCbG9jaxITCgt0b29sX3VzZV9pZBgBIAEoCRIUCgxjb250ZW50X2pzb24YAiABKAkSEAoIaXNfZXJyb3IYAyABKAgiNAoNVGhpbmtpbmdCbG9jaxIQCgh0aGlua2luZxgBIAEoCRIRCglzaWduYXR1cmUYAiABKAkiLgoKSW1hZ2VCbG9jaxISCgptZWRpYV90eXBlGAEgASgJEgwKBGRhdGEYAiABKAwi6AEKDVN5c3RlbU1lc3NhZ2USDwoHc3VidHlwZRgBIAEoCRIQCgNjd2QYCiABKAlIAIgBARINCgV0b29scxgLIAMoCRISCgVtb2RlbBgMIAEoCUgBiAEBEhwKD3Blcm1pc3Npb25fbW9kZRgNIAEoCUgCiAEBEjgKEGNvbXBhY3RfbWV0YWRhdGEYFCABKAsyGS5hZ2VudC52MS5Db21wYWN0TWV0YWRhdGFIA4gBAUIGCgRfY3dkQggKBl9tb2RlbEISChBfcGVybWlzc2lvbl9tb2RlQhMKEV9jb21wYWN0X21ldGFkYXRhIjYKD0NvbXBhY3RNZXRhZGF0YRIPCgd0cmlnZ2VyGAEgASgJEhIKCnByZV90b2tlbnMYAiABKAUibQoLU3RyZWFtRXZlbnQSEgoKZXZlbnRfdHlwZRgBIAEoCRISCgpldmVudF9qc29uGAIgASgJEh8KEnBhcmVudF90b29sX3VzZV9pZBgDIAEoCUgAiAEBQhUKE19wYXJlbnRfdG9vbF91c2VfaWQi2wEKDVJlc3VsdE1lc3NhZ2USDwoHc3VidHlwZRgBIAEoCRIQCghpc19lcnJvchgCIAEoCBITCgZyZXN1bHQYAyABKAlIAIgBARIWCg50b3RhbF9jb3N0X3VzZBgEIAEoARIRCgludW1fdHVybnMYBSABKAUSEwoLZHVyYXRpb25fbXMYBiABKAMSFwoPZHVyYXRpb25fYXBpX21zGAcgASgDEh4KBXVzYWdlGAggASgLMg8uYWdlbnQudjEuVXNhZ2USDgoGZXJyb3JzGAkgAygJQgkKB19yZXN1bHQiegoFVXNhZ2USFAoMaW5wdXRfdG9rZW5zGAEgASgFEhUKDW91dHB1dF90b2tlbnMYAiABKAUSHwoXY2FjaGVfcmVhZF9pbnB1dF90b2tlbnMYAyABKAUSIwobY2FjaGVfY3JlYXRpb25faW5wdXRfdG9rZW5zGAQgASgFQjBaLmdpdGh1Yi5jb20vZm9yZ2UvcGxhdGZvcm0vZ2VuL2FnZW50L3YxO2FnZW50djFiBnByb3RvMw");
 
 /**
  * AgentMessage represents a message in the conversation.
  * Maps closely to Claude Agent SDK's SDKMessage types.
  *
- * @generated from message agent.v1.AgentMessage
+ * @generated from message agent.v1.Message
  */
-export type AgentMessage = Message<"agent.v1.AgentMessage"> & {
+export type Message = Message$1<"agent.v1.Message"> & {
   /**
    * @generated from field: string uuid = 1;
    */
@@ -44,7 +44,7 @@ export type AgentMessage = Message<"agent.v1.AgentMessage"> & {
   createdAt: bigint;
 
   /**
-   * @generated from oneof agent.v1.AgentMessage.payload
+   * @generated from oneof agent.v1.Message.payload
    */
   payload: {
     /**
@@ -80,10 +80,10 @@ export type AgentMessage = Message<"agent.v1.AgentMessage"> & {
 };
 
 /**
- * Describes the message agent.v1.AgentMessage.
- * Use `create(AgentMessageSchema)` to create a new message.
+ * Describes the message agent.v1.Message.
+ * Use `create(MessageSchema)` to create a new message.
  */
-export const AgentMessageSchema: GenMessage<AgentMessage> = /*@__PURE__*/
+export const MessageSchema: GenMessage<Message> = /*@__PURE__*/
   messageDesc(file_agent_v1_messages, 0);
 
 /**
@@ -91,7 +91,7 @@ export const AgentMessageSchema: GenMessage<AgentMessage> = /*@__PURE__*/
  *
  * @generated from message agent.v1.UserMessage
  */
-export type UserMessage = Message<"agent.v1.UserMessage"> & {
+export type UserMessage = Message$1<"agent.v1.UserMessage"> & {
   /**
    * @generated from field: string content = 1;
    */
@@ -117,7 +117,7 @@ export const UserMessageSchema: GenMessage<UserMessage> = /*@__PURE__*/
  *
  * @generated from message agent.v1.AssistantMessage
  */
-export type AssistantMessage = Message<"agent.v1.AssistantMessage"> & {
+export type AssistantMessage = Message$1<"agent.v1.AssistantMessage"> & {
   /**
    * @generated from field: repeated agent.v1.ContentBlock content = 1;
    */
@@ -141,7 +141,7 @@ export const AssistantMessageSchema: GenMessage<AssistantMessage> = /*@__PURE__*
  *
  * @generated from message agent.v1.ContentBlock
  */
-export type ContentBlock = Message<"agent.v1.ContentBlock"> & {
+export type ContentBlock = Message$1<"agent.v1.ContentBlock"> & {
   /**
    * @generated from oneof agent.v1.ContentBlock.block
    */
@@ -188,7 +188,7 @@ export const ContentBlockSchema: GenMessage<ContentBlock> = /*@__PURE__*/
 /**
  * @generated from message agent.v1.TextBlock
  */
-export type TextBlock = Message<"agent.v1.TextBlock"> & {
+export type TextBlock = Message$1<"agent.v1.TextBlock"> & {
   /**
    * @generated from field: string text = 1;
    */
@@ -205,7 +205,7 @@ export const TextBlockSchema: GenMessage<TextBlock> = /*@__PURE__*/
 /**
  * @generated from message agent.v1.ToolUseBlock
  */
-export type ToolUseBlock = Message<"agent.v1.ToolUseBlock"> & {
+export type ToolUseBlock = Message$1<"agent.v1.ToolUseBlock"> & {
   /**
    * @generated from field: string id = 1;
    */
@@ -234,7 +234,7 @@ export const ToolUseBlockSchema: GenMessage<ToolUseBlock> = /*@__PURE__*/
 /**
  * @generated from message agent.v1.ToolResultBlock
  */
-export type ToolResultBlock = Message<"agent.v1.ToolResultBlock"> & {
+export type ToolResultBlock = Message$1<"agent.v1.ToolResultBlock"> & {
   /**
    * @generated from field: string tool_use_id = 1;
    */
@@ -263,7 +263,7 @@ export const ToolResultBlockSchema: GenMessage<ToolResultBlock> = /*@__PURE__*/
 /**
  * @generated from message agent.v1.ThinkingBlock
  */
-export type ThinkingBlock = Message<"agent.v1.ThinkingBlock"> & {
+export type ThinkingBlock = Message$1<"agent.v1.ThinkingBlock"> & {
   /**
    * @generated from field: string thinking = 1;
    */
@@ -287,7 +287,7 @@ export const ThinkingBlockSchema: GenMessage<ThinkingBlock> = /*@__PURE__*/
 /**
  * @generated from message agent.v1.ImageBlock
  */
-export type ImageBlock = Message<"agent.v1.ImageBlock"> & {
+export type ImageBlock = Message$1<"agent.v1.ImageBlock"> & {
   /**
    * @generated from field: string media_type = 1;
    */
@@ -311,7 +311,7 @@ export const ImageBlockSchema: GenMessage<ImageBlock> = /*@__PURE__*/
  *
  * @generated from message agent.v1.SystemMessage
  */
-export type SystemMessage = Message<"agent.v1.SystemMessage"> & {
+export type SystemMessage = Message$1<"agent.v1.SystemMessage"> & {
   /**
    * "init", "compact_boundary"
    *
@@ -359,7 +359,7 @@ export const SystemMessageSchema: GenMessage<SystemMessage> = /*@__PURE__*/
 /**
  * @generated from message agent.v1.CompactMetadata
  */
-export type CompactMetadata = Message<"agent.v1.CompactMetadata"> & {
+export type CompactMetadata = Message$1<"agent.v1.CompactMetadata"> & {
   /**
    * "manual" or "auto"
    *
@@ -385,7 +385,7 @@ export const CompactMetadataSchema: GenMessage<CompactMetadata> = /*@__PURE__*/
  *
  * @generated from message agent.v1.StreamEvent
  */
-export type StreamEvent = Message<"agent.v1.StreamEvent"> & {
+export type StreamEvent = Message$1<"agent.v1.StreamEvent"> & {
   /**
    * "content_block_start", "content_block_delta", etc.
    *
@@ -418,7 +418,7 @@ export const StreamEventSchema: GenMessage<StreamEvent> = /*@__PURE__*/
  *
  * @generated from message agent.v1.ResultMessage
  */
-export type ResultMessage = Message<"agent.v1.ResultMessage"> & {
+export type ResultMessage = Message$1<"agent.v1.ResultMessage"> & {
   /**
    * "success", "error_max_turns", "error_during_execution", etc.
    *
@@ -477,7 +477,7 @@ export const ResultMessageSchema: GenMessage<ResultMessage> = /*@__PURE__*/
 /**
  * @generated from message agent.v1.Usage
  */
-export type Usage = Message<"agent.v1.Usage"> & {
+export type Usage = Message$1<"agent.v1.Usage"> & {
   /**
    * @generated from field: int32 input_tokens = 1;
    */

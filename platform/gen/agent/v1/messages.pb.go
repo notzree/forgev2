@@ -23,7 +23,7 @@ const (
 
 // AgentMessage represents a message in the conversation.
 // Maps closely to Claude Agent SDK's SDKMessage types.
-type AgentMessage struct {
+type Message struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	Uuid      string                 `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
 	SessionId string                 `protobuf:"bytes,2,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
@@ -31,30 +31,30 @@ type AgentMessage struct {
 	CreatedAt int64                  `protobuf:"varint,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"` // Unix timestamp milliseconds
 	// Types that are valid to be assigned to Payload:
 	//
-	//	*AgentMessage_UserMessage
-	//	*AgentMessage_AssistantMessage
-	//	*AgentMessage_SystemMessage
-	//	*AgentMessage_StreamEvent
-	//	*AgentMessage_ResultMessage
-	Payload       isAgentMessage_Payload `protobuf_oneof:"payload"`
+	//	*Message_UserMessage
+	//	*Message_AssistantMessage
+	//	*Message_SystemMessage
+	//	*Message_StreamEvent
+	//	*Message_ResultMessage
+	Payload       isMessage_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AgentMessage) Reset() {
-	*x = AgentMessage{}
+func (x *Message) Reset() {
+	*x = Message{}
 	mi := &file_agent_v1_messages_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AgentMessage) String() string {
+func (x *Message) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AgentMessage) ProtoMessage() {}
+func (*Message) ProtoMessage() {}
 
-func (x *AgentMessage) ProtoReflect() protoreflect.Message {
+func (x *Message) ProtoReflect() protoreflect.Message {
 	mi := &file_agent_v1_messages_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -66,124 +66,124 @@ func (x *AgentMessage) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AgentMessage.ProtoReflect.Descriptor instead.
-func (*AgentMessage) Descriptor() ([]byte, []int) {
+// Deprecated: Use Message.ProtoReflect.Descriptor instead.
+func (*Message) Descriptor() ([]byte, []int) {
 	return file_agent_v1_messages_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *AgentMessage) GetUuid() string {
+func (x *Message) GetUuid() string {
 	if x != nil {
 		return x.Uuid
 	}
 	return ""
 }
 
-func (x *AgentMessage) GetSessionId() string {
+func (x *Message) GetSessionId() string {
 	if x != nil {
 		return x.SessionId
 	}
 	return ""
 }
 
-func (x *AgentMessage) GetSeq() int64 {
+func (x *Message) GetSeq() int64 {
 	if x != nil {
 		return x.Seq
 	}
 	return 0
 }
 
-func (x *AgentMessage) GetCreatedAt() int64 {
+func (x *Message) GetCreatedAt() int64 {
 	if x != nil {
 		return x.CreatedAt
 	}
 	return 0
 }
 
-func (x *AgentMessage) GetPayload() isAgentMessage_Payload {
+func (x *Message) GetPayload() isMessage_Payload {
 	if x != nil {
 		return x.Payload
 	}
 	return nil
 }
 
-func (x *AgentMessage) GetUserMessage() *UserMessage {
+func (x *Message) GetUserMessage() *UserMessage {
 	if x != nil {
-		if x, ok := x.Payload.(*AgentMessage_UserMessage); ok {
+		if x, ok := x.Payload.(*Message_UserMessage); ok {
 			return x.UserMessage
 		}
 	}
 	return nil
 }
 
-func (x *AgentMessage) GetAssistantMessage() *AssistantMessage {
+func (x *Message) GetAssistantMessage() *AssistantMessage {
 	if x != nil {
-		if x, ok := x.Payload.(*AgentMessage_AssistantMessage); ok {
+		if x, ok := x.Payload.(*Message_AssistantMessage); ok {
 			return x.AssistantMessage
 		}
 	}
 	return nil
 }
 
-func (x *AgentMessage) GetSystemMessage() *SystemMessage {
+func (x *Message) GetSystemMessage() *SystemMessage {
 	if x != nil {
-		if x, ok := x.Payload.(*AgentMessage_SystemMessage); ok {
+		if x, ok := x.Payload.(*Message_SystemMessage); ok {
 			return x.SystemMessage
 		}
 	}
 	return nil
 }
 
-func (x *AgentMessage) GetStreamEvent() *StreamEvent {
+func (x *Message) GetStreamEvent() *StreamEvent {
 	if x != nil {
-		if x, ok := x.Payload.(*AgentMessage_StreamEvent); ok {
+		if x, ok := x.Payload.(*Message_StreamEvent); ok {
 			return x.StreamEvent
 		}
 	}
 	return nil
 }
 
-func (x *AgentMessage) GetResultMessage() *ResultMessage {
+func (x *Message) GetResultMessage() *ResultMessage {
 	if x != nil {
-		if x, ok := x.Payload.(*AgentMessage_ResultMessage); ok {
+		if x, ok := x.Payload.(*Message_ResultMessage); ok {
 			return x.ResultMessage
 		}
 	}
 	return nil
 }
 
-type isAgentMessage_Payload interface {
-	isAgentMessage_Payload()
+type isMessage_Payload interface {
+	isMessage_Payload()
 }
 
-type AgentMessage_UserMessage struct {
+type Message_UserMessage struct {
 	UserMessage *UserMessage `protobuf:"bytes,10,opt,name=user_message,json=userMessage,proto3,oneof"`
 }
 
-type AgentMessage_AssistantMessage struct {
+type Message_AssistantMessage struct {
 	AssistantMessage *AssistantMessage `protobuf:"bytes,11,opt,name=assistant_message,json=assistantMessage,proto3,oneof"`
 }
 
-type AgentMessage_SystemMessage struct {
+type Message_SystemMessage struct {
 	SystemMessage *SystemMessage `protobuf:"bytes,12,opt,name=system_message,json=systemMessage,proto3,oneof"`
 }
 
-type AgentMessage_StreamEvent struct {
+type Message_StreamEvent struct {
 	StreamEvent *StreamEvent `protobuf:"bytes,13,opt,name=stream_event,json=streamEvent,proto3,oneof"`
 }
 
-type AgentMessage_ResultMessage struct {
+type Message_ResultMessage struct {
 	ResultMessage *ResultMessage `protobuf:"bytes,14,opt,name=result_message,json=resultMessage,proto3,oneof"`
 }
 
-func (*AgentMessage_UserMessage) isAgentMessage_Payload() {}
+func (*Message_UserMessage) isMessage_Payload() {}
 
-func (*AgentMessage_AssistantMessage) isAgentMessage_Payload() {}
+func (*Message_AssistantMessage) isMessage_Payload() {}
 
-func (*AgentMessage_SystemMessage) isAgentMessage_Payload() {}
+func (*Message_SystemMessage) isMessage_Payload() {}
 
-func (*AgentMessage_StreamEvent) isAgentMessage_Payload() {}
+func (*Message_StreamEvent) isMessage_Payload() {}
 
-func (*AgentMessage_ResultMessage) isAgentMessage_Payload() {}
+func (*Message_ResultMessage) isMessage_Payload() {}
 
 // User input message
 type UserMessage struct {
@@ -1071,8 +1071,8 @@ var File_agent_v1_messages_proto protoreflect.FileDescriptor
 
 const file_agent_v1_messages_proto_rawDesc = "" +
 	"\n" +
-	"\x17agent/v1/messages.proto\x12\bagent.v1\"\xc4\x03\n" +
-	"\fAgentMessage\x12\x12\n" +
+	"\x17agent/v1/messages.proto\x12\bagent.v1\"\xbf\x03\n" +
+	"\aMessage\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x02 \x01(\tR\tsessionId\x12\x10\n" +
@@ -1175,7 +1175,7 @@ func file_agent_v1_messages_proto_rawDescGZIP() []byte {
 
 var file_agent_v1_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_agent_v1_messages_proto_goTypes = []any{
-	(*AgentMessage)(nil),     // 0: agent.v1.AgentMessage
+	(*Message)(nil),          // 0: agent.v1.Message
 	(*UserMessage)(nil),      // 1: agent.v1.UserMessage
 	(*AssistantMessage)(nil), // 2: agent.v1.AssistantMessage
 	(*ContentBlock)(nil),     // 3: agent.v1.ContentBlock
@@ -1191,11 +1191,11 @@ var file_agent_v1_messages_proto_goTypes = []any{
 	(*Usage)(nil),            // 13: agent.v1.Usage
 }
 var file_agent_v1_messages_proto_depIdxs = []int32{
-	1,  // 0: agent.v1.AgentMessage.user_message:type_name -> agent.v1.UserMessage
-	2,  // 1: agent.v1.AgentMessage.assistant_message:type_name -> agent.v1.AssistantMessage
-	9,  // 2: agent.v1.AgentMessage.system_message:type_name -> agent.v1.SystemMessage
-	11, // 3: agent.v1.AgentMessage.stream_event:type_name -> agent.v1.StreamEvent
-	12, // 4: agent.v1.AgentMessage.result_message:type_name -> agent.v1.ResultMessage
+	1,  // 0: agent.v1.Message.user_message:type_name -> agent.v1.UserMessage
+	2,  // 1: agent.v1.Message.assistant_message:type_name -> agent.v1.AssistantMessage
+	9,  // 2: agent.v1.Message.system_message:type_name -> agent.v1.SystemMessage
+	11, // 3: agent.v1.Message.stream_event:type_name -> agent.v1.StreamEvent
+	12, // 4: agent.v1.Message.result_message:type_name -> agent.v1.ResultMessage
 	3,  // 5: agent.v1.UserMessage.additional_content:type_name -> agent.v1.ContentBlock
 	3,  // 6: agent.v1.AssistantMessage.content:type_name -> agent.v1.ContentBlock
 	4,  // 7: agent.v1.ContentBlock.text:type_name -> agent.v1.TextBlock
@@ -1218,11 +1218,11 @@ func file_agent_v1_messages_proto_init() {
 		return
 	}
 	file_agent_v1_messages_proto_msgTypes[0].OneofWrappers = []any{
-		(*AgentMessage_UserMessage)(nil),
-		(*AgentMessage_AssistantMessage)(nil),
-		(*AgentMessage_SystemMessage)(nil),
-		(*AgentMessage_StreamEvent)(nil),
-		(*AgentMessage_ResultMessage)(nil),
+		(*Message_UserMessage)(nil),
+		(*Message_AssistantMessage)(nil),
+		(*Message_SystemMessage)(nil),
+		(*Message_StreamEvent)(nil),
+		(*Message_ResultMessage)(nil),
 	}
 	file_agent_v1_messages_proto_msgTypes[2].OneofWrappers = []any{}
 	file_agent_v1_messages_proto_msgTypes[3].OneofWrappers = []any{

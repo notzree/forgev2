@@ -33,7 +33,6 @@ var Module = fx.Module("handler",
 	fx.Provide(
 		AsHandler(NewHealthHandler),
 		AsHandler(NewAgentHandler),
-		AsHandler(NewWebSocketHandler),
 	),
 	fx.Invoke(RegisterAll),
 )

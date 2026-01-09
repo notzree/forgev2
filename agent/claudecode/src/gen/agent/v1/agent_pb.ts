@@ -4,7 +4,7 @@
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { AgentMessage } from "./messages_pb";
+import type { Message as Message$1 } from "./messages_pb";
 import { file_agent_v1_messages } from "./messages_pb";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file agent/v1/agent.proto.
  */
 export const file_agent_v1_agent: GenFile = /*@__PURE__*/
-  fileDesc("ChRhZ2VudC92MS9hZ2VudC5wcm90bxIIYWdlbnQudjEihwIKDEFnZW50Q29tbWFuZBISCgpyZXF1ZXN0X2lkGAEgASgJEjQKDHNlbmRfbWVzc2FnZRgKIAEoCzIcLmFnZW50LnYxLlNlbmRNZXNzYWdlQ29tbWFuZEgAEi8KCWludGVycnVwdBgLIAEoCzIaLmFnZW50LnYxLkludGVycnVwdENvbW1hbmRIABJBChNzZXRfcGVybWlzc2lvbl9tb2RlGAwgASgLMiIuYWdlbnQudjEuU2V0UGVybWlzc2lvbk1vZGVDb21tYW5kSAASLgoJc2V0X21vZGVsGA0gASgLMhkuYWdlbnQudjEuU2V0TW9kZWxDb21tYW5kSABCCQoHY29tbWFuZCJQChJTZW5kTWVzc2FnZUNvbW1hbmQSDwoHY29udGVudBgBIAEoCRIpCgthdHRhY2htZW50cxgCIAMoCzIULmFnZW50LnYxLkF0dGFjaG1lbnQiQgoKQXR0YWNobWVudBIQCghmaWxlbmFtZRgBIAEoCRIRCgltaW1lX3R5cGUYAiABKAkSDwoHY29udGVudBgDIAEoDCISChBJbnRlcnJ1cHRDb21tYW5kIigKGFNldFBlcm1pc3Npb25Nb2RlQ29tbWFuZBIMCgRtb2RlGAEgASgJIiAKD1NldE1vZGVsQ29tbWFuZBINCgVtb2RlbBgBIAEoCSKeAQoKQWdlbnRFdmVudBISCgpyZXF1ZXN0X2lkGAEgASgJEikKB21lc3NhZ2UYCiABKAsyFi5hZ2VudC52MS5BZ2VudE1lc3NhZ2VIABIhCgNhY2sYCyABKAsyEi5hZ2VudC52MS5BY2tFdmVudEgAEiUKBWVycm9yGAwgASgLMhQuYWdlbnQudjEuRXJyb3JFdmVudEgAQgcKBWV2ZW50IiwKCEFja0V2ZW50Eg8KB3N1Y2Nlc3MYASABKAgSDwoHbWVzc2FnZRgCIAEoCSI6CgpFcnJvckV2ZW50EgwKBGNvZGUYASABKAkSDwoHbWVzc2FnZRgCIAEoCRINCgVmYXRhbBgDIAEoCCISChBHZXRTdGF0dXNSZXF1ZXN0IrUBChFHZXRTdGF0dXNSZXNwb25zZRIQCghhZ2VudF9pZBgBIAEoCRISCgpzZXNzaW9uX2lkGAIgASgJEiMKBXN0YXRlGAMgASgOMhQuYWdlbnQudjEuQWdlbnRTdGF0ZRISCgpsYXRlc3Rfc2VxGAQgASgDEhUKDWN1cnJlbnRfbW9kZWwYBSABKAkSFwoPcGVybWlzc2lvbl9tb2RlGAYgASgJEhEKCXVwdGltZV9tcxgHIAEoAyIxCg5DYXRjaFVwUmVxdWVzdBIQCghmcm9tX3NlcRgBIAEoAxINCgVsaW1pdBgCIAEoBSJhCg9DYXRjaFVwUmVzcG9uc2USKAoIbWVzc2FnZXMYASADKAsyFi5hZ2VudC52MS5BZ2VudE1lc3NhZ2USEgoKbGF0ZXN0X3NlcRgCIAEoAxIQCghoYXNfbW9yZRgDIAEoCCIjCg9TaHV0ZG93blJlcXVlc3QSEAoIZ3JhY2VmdWwYASABKAgiIwoQU2h1dGRvd25SZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIKnIKCkFnZW50U3RhdGUSGwoXQUdFTlRfU1RBVEVfVU5TUEVDSUZJRUQQABIUChBBR0VOVF9TVEFURV9JRExFEAESGgoWQUdFTlRfU1RBVEVfUFJPQ0VTU0lORxACEhUKEUFHRU5UX1NUQVRFX0VSUk9SEAMylAIKDEFnZW50U2VydmljZRI7CgdDb25uZWN0EhYuYWdlbnQudjEuQWdlbnRDb21tYW5kGhQuYWdlbnQudjEuQWdlbnRFdmVudCgBMAESRAoJR2V0U3RhdHVzEhouYWdlbnQudjEuR2V0U3RhdHVzUmVxdWVzdBobLmFnZW50LnYxLkdldFN0YXR1c1Jlc3BvbnNlEj4KB0NhdGNoVXASGC5hZ2VudC52MS5DYXRjaFVwUmVxdWVzdBoZLmFnZW50LnYxLkNhdGNoVXBSZXNwb25zZRJBCghTaHV0ZG93bhIZLmFnZW50LnYxLlNodXRkb3duUmVxdWVzdBoaLmFnZW50LnYxLlNodXRkb3duUmVzcG9uc2VCMFouZ2l0aHViLmNvbS9mb3JnZS9wbGF0Zm9ybS9nZW4vYWdlbnQvdjE7YWdlbnR2MWIGcHJvdG8z", [file_agent_v1_messages]);
+  fileDesc("ChRhZ2VudC92MS9hZ2VudC5wcm90bxIIYWdlbnQudjEihwIKDEFnZW50Q29tbWFuZBISCgpyZXF1ZXN0X2lkGAEgASgJEjQKDHNlbmRfbWVzc2FnZRgKIAEoCzIcLmFnZW50LnYxLlNlbmRNZXNzYWdlQ29tbWFuZEgAEi8KCWludGVycnVwdBgLIAEoCzIaLmFnZW50LnYxLkludGVycnVwdENvbW1hbmRIABJBChNzZXRfcGVybWlzc2lvbl9tb2RlGAwgASgLMiIuYWdlbnQudjEuU2V0UGVybWlzc2lvbk1vZGVDb21tYW5kSAASLgoJc2V0X21vZGVsGA0gASgLMhkuYWdlbnQudjEuU2V0TW9kZWxDb21tYW5kSABCCQoHY29tbWFuZCJQChJTZW5kTWVzc2FnZUNvbW1hbmQSDwoHY29udGVudBgBIAEoCRIpCgthdHRhY2htZW50cxgCIAMoCzIULmFnZW50LnYxLkF0dGFjaG1lbnQiQgoKQXR0YWNobWVudBIQCghmaWxlbmFtZRgBIAEoCRIRCgltaW1lX3R5cGUYAiABKAkSDwoHY29udGVudBgDIAEoDCISChBJbnRlcnJ1cHRDb21tYW5kIigKGFNldFBlcm1pc3Npb25Nb2RlQ29tbWFuZBIMCgRtb2RlGAEgASgJIiAKD1NldE1vZGVsQ29tbWFuZBINCgVtb2RlbBgBIAEoCSKZAQoKQWdlbnRFdmVudBISCgpyZXF1ZXN0X2lkGAEgASgJEiQKB21lc3NhZ2UYCiABKAsyES5hZ2VudC52MS5NZXNzYWdlSAASIQoDYWNrGAsgASgLMhIuYWdlbnQudjEuQWNrRXZlbnRIABIlCgVlcnJvchgMIAEoCzIULmFnZW50LnYxLkVycm9yRXZlbnRIAEIHCgVldmVudCIsCghBY2tFdmVudBIPCgdzdWNjZXNzGAEgASgIEg8KB21lc3NhZ2UYAiABKAkiOgoKRXJyb3JFdmVudBIMCgRjb2RlGAEgASgJEg8KB21lc3NhZ2UYAiABKAkSDQoFZmF0YWwYAyABKAgiEgoQR2V0U3RhdHVzUmVxdWVzdCK1AQoRR2V0U3RhdHVzUmVzcG9uc2USEAoIYWdlbnRfaWQYASABKAkSEgoKc2Vzc2lvbl9pZBgCIAEoCRIjCgVzdGF0ZRgDIAEoDjIULmFnZW50LnYxLkFnZW50U3RhdGUSEgoKbGF0ZXN0X3NlcRgEIAEoAxIVCg1jdXJyZW50X21vZGVsGAUgASgJEhcKD3Blcm1pc3Npb25fbW9kZRgGIAEoCRIRCgl1cHRpbWVfbXMYByABKAMiIwoPU2h1dGRvd25SZXF1ZXN0EhAKCGdyYWNlZnVsGAEgASgIIiMKEFNodXRkb3duUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCpyCgpBZ2VudFN0YXRlEhsKF0FHRU5UX1NUQVRFX1VOU1BFQ0lGSUVEEAASFAoQQUdFTlRfU1RBVEVfSURMRRABEhoKFkFHRU5UX1NUQVRFX1BST0NFU1NJTkcQAhIVChFBR0VOVF9TVEFURV9FUlJPUhADMtQBCgxBZ2VudFNlcnZpY2USOwoHQ29ubmVjdBIWLmFnZW50LnYxLkFnZW50Q29tbWFuZBoULmFnZW50LnYxLkFnZW50RXZlbnQoATABEkQKCUdldFN0YXR1cxIaLmFnZW50LnYxLkdldFN0YXR1c1JlcXVlc3QaGy5hZ2VudC52MS5HZXRTdGF0dXNSZXNwb25zZRJBCghTaHV0ZG93bhIZLmFnZW50LnYxLlNodXRkb3duUmVxdWVzdBoaLmFnZW50LnYxLlNodXRkb3duUmVzcG9uc2VCMFouZ2l0aHViLmNvbS9mb3JnZS9wbGF0Zm9ybS9nZW4vYWdlbnQvdjE7YWdlbnR2MWIGcHJvdG8z", [file_agent_v1_messages]);
 
 /**
  * Commands sent from platform to agent
@@ -85,6 +85,8 @@ export const SendMessageCommandSchema: GenMessage<SendMessageCommand> = /*@__PUR
   messageDesc(file_agent_v1_agent, 1);
 
 /**
+ * TODO (richard): Support object storage instead of passing it through rpc stream
+ *
  * @generated from message agent.v1.Attachment
  */
 export type Attachment = Message<"agent.v1.Attachment"> & {
@@ -178,9 +180,9 @@ export type AgentEvent = Message<"agent.v1.AgentEvent"> & {
    */
   event: {
     /**
-     * @generated from field: agent.v1.AgentMessage message = 10;
+     * @generated from field: agent.v1.Message message = 10;
      */
-    value: AgentMessage;
+    value: Message$1;
     case: "message";
   } | {
     /**
@@ -318,61 +320,6 @@ export const GetStatusResponseSchema: GenMessage<GetStatusResponse> = /*@__PURE_
   messageDesc(file_agent_v1_agent, 10);
 
 /**
- * CatchUp
- *
- * @generated from message agent.v1.CatchUpRequest
- */
-export type CatchUpRequest = Message<"agent.v1.CatchUpRequest"> & {
-  /**
-   * Get messages where seq > from_seq
-   *
-   * @generated from field: int64 from_seq = 1;
-   */
-  fromSeq: bigint;
-
-  /**
-   * Max messages to return (0 = no limit)
-   *
-   * @generated from field: int32 limit = 2;
-   */
-  limit: number;
-};
-
-/**
- * Describes the message agent.v1.CatchUpRequest.
- * Use `create(CatchUpRequestSchema)` to create a new message.
- */
-export const CatchUpRequestSchema: GenMessage<CatchUpRequest> = /*@__PURE__*/
-  messageDesc(file_agent_v1_agent, 11);
-
-/**
- * @generated from message agent.v1.CatchUpResponse
- */
-export type CatchUpResponse = Message<"agent.v1.CatchUpResponse"> & {
-  /**
-   * @generated from field: repeated agent.v1.AgentMessage messages = 1;
-   */
-  messages: AgentMessage[];
-
-  /**
-   * @generated from field: int64 latest_seq = 2;
-   */
-  latestSeq: bigint;
-
-  /**
-   * @generated from field: bool has_more = 3;
-   */
-  hasMore: boolean;
-};
-
-/**
- * Describes the message agent.v1.CatchUpResponse.
- * Use `create(CatchUpResponseSchema)` to create a new message.
- */
-export const CatchUpResponseSchema: GenMessage<CatchUpResponse> = /*@__PURE__*/
-  messageDesc(file_agent_v1_agent, 12);
-
-/**
  * Shutdown
  *
  * @generated from message agent.v1.ShutdownRequest
@@ -391,7 +338,7 @@ export type ShutdownRequest = Message<"agent.v1.ShutdownRequest"> & {
  * Use `create(ShutdownRequestSchema)` to create a new message.
  */
 export const ShutdownRequestSchema: GenMessage<ShutdownRequest> = /*@__PURE__*/
-  messageDesc(file_agent_v1_agent, 13);
+  messageDesc(file_agent_v1_agent, 11);
 
 /**
  * @generated from message agent.v1.ShutdownResponse
@@ -408,7 +355,7 @@ export type ShutdownResponse = Message<"agent.v1.ShutdownResponse"> & {
  * Use `create(ShutdownResponseSchema)` to create a new message.
  */
 export const ShutdownResponseSchema: GenMessage<ShutdownResponse> = /*@__PURE__*/
-  messageDesc(file_agent_v1_agent, 14);
+  messageDesc(file_agent_v1_agent, 12);
 
 /**
  * @generated from enum agent.v1.AgentState
@@ -468,17 +415,6 @@ export const AgentService: GenService<{
     methodKind: "unary";
     input: typeof GetStatusRequestSchema;
     output: typeof GetStatusResponseSchema;
-  },
-  /**
-   * CatchUp retrieves messages since a given sequence number.
-   * Used for reconnection scenarios.
-   *
-   * @generated from rpc agent.v1.AgentService.CatchUp
-   */
-  catchUp: {
-    methodKind: "unary";
-    input: typeof CatchUpRequestSchema;
-    output: typeof CatchUpResponseSchema;
   },
   /**
    * Shutdown gracefully terminates the agent.
