@@ -7,25 +7,24 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/forge/platform/internal/agent"
+	"github.com/forge/platform/internal/agent/processor"
 	"github.com/forge/platform/internal/errors"
 )
 
-// AgentHandler handles agent management endpoints
-type AgentHandler struct {
-	manager  *agent.Manager
-	registry *agent.Registry
+// Handler handles agent HTTP endpoints
+type Handler struct {
+	processor *processor.Processor
 }
 
-// NewAgentHandler creates a new agent handler
-func NewAgentHandler(manager *agent.Manager, registry *agent.Registry) *AgentHandler {
-	return &AgentHandler{
-		manager:  manager,
-		registry: registry,
+// NewHandler creates a new agent handler
+func NewHandler(processor *processor.Processor) *Handler {
+	return &Handler{
+		processor: processor,
 	}
 }
 
-// Register registers agent routes
-func (h *AgentHandler) Register(e *echo.Echo) {
+// Register registers agent routes with Echo
+func (h *Handler) Register(e *echo.Echo) {
 	g := e.Group("/api/v1/agents")
 	g.POST("", h.Create)
 	g.GET("", h.List)
@@ -66,7 +65,7 @@ func agentInfoToResponse(info *agent.Info) AgentResponse {
 }
 
 // Create handles POST /api/v1/agents
-func (h *AgentHandler) Create(c echo.Context) error {
+func (h *Handler) Create(c echo.Context) error {
 	var req CreateAgentRequest
 	if err := c.Bind(&req); err != nil {
 		return errors.BadRequest("invalid request body")
@@ -79,7 +78,7 @@ func (h *AgentHandler) Create(c echo.Context) error {
 		return errors.BadRequest("address is required")
 	}
 
-	info, err := h.manager.CreateAgent(c.Request().Context(), req.OwnerID, req.Address)
+	info, err := h.processor.CreateAgent(c.Request().Context(), req.OwnerID, req.Address)
 	if err != nil {
 		return errors.ServiceUnavailable(err.Error())
 	}
@@ -88,15 +87,10 @@ func (h *AgentHandler) Create(c echo.Context) error {
 }
 
 // List handles GET /api/v1/agents
-func (h *AgentHandler) List(c echo.Context) error {
+func (h *Handler) List(c echo.Context) error {
 	ownerID := c.QueryParam("owner_id")
 
-	var agents []*agent.Info
-	if ownerID != "" {
-		agents = h.registry.GetByOwner(ownerID)
-	} else {
-		agents = h.registry.List()
-	}
+	agents := h.processor.ListAgents(ownerID)
 
 	responses := make([]AgentResponse, len(agents))
 	for i, info := range agents {
@@ -110,17 +104,17 @@ func (h *AgentHandler) List(c echo.Context) error {
 }
 
 // Get handles GET /api/v1/agents/:id
-func (h *AgentHandler) Get(c echo.Context) error {
+func (h *Handler) Get(c echo.Context) error {
 	agentID := c.Param("id")
 
-	info, exists := h.registry.Get(agentID)
+	info, exists := h.processor.GetAgent(agentID)
 	if !exists {
 		return errors.NotFound("agent not found")
 	}
 
 	// Optionally refresh status from agent
 	if c.QueryParam("refresh") == "true" && info.State == agent.StateRunning {
-		status, err := h.manager.GetStatus(c.Request().Context(), agentID)
+		status, err := h.processor.GetStatus(c.Request().Context(), agentID)
 		if err == nil {
 			info.SessionID = status.SessionId
 			info.LatestSeq = status.LatestSeq
@@ -131,11 +125,11 @@ func (h *AgentHandler) Get(c echo.Context) error {
 }
 
 // Delete handles DELETE /api/v1/agents/:id
-func (h *AgentHandler) Delete(c echo.Context) error {
+func (h *Handler) Delete(c echo.Context) error {
 	agentID := c.Param("id")
 	graceful := c.QueryParam("graceful") != "false" // default to graceful
 
-	if err := h.manager.DeleteAgent(c.Request().Context(), agentID, graceful); err != nil {
+	if err := h.processor.DeleteAgent(c.Request().Context(), agentID, graceful); err != nil {
 		return errors.NotFound(err.Error())
 	}
 
@@ -143,7 +137,7 @@ func (h *AgentHandler) Delete(c echo.Context) error {
 }
 
 // GetMessages handles GET /api/v1/agents/:id/messages
-func (h *AgentHandler) GetMessages(c echo.Context) error {
+func (h *Handler) GetMessages(c echo.Context) error {
 	agentID := c.Param("id")
 
 	fromSeq := int64(0)
@@ -161,7 +155,7 @@ func (h *AgentHandler) GetMessages(c echo.Context) error {
 	}
 
 	// Check if agent exists
-	info, exists := h.registry.Get(agentID)
+	info, exists := h.processor.GetAgent(agentID)
 	if !exists {
 		return errors.NotFound("agent not found")
 	}

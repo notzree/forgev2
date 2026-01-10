@@ -32,7 +32,6 @@ func RegisterAll(p RegisterHandlersParams) {
 var Module = fx.Module("handler",
 	fx.Provide(
 		AsHandler(NewHealthHandler),
-		AsHandler(NewAgentHandler),
 	),
 	fx.Invoke(RegisterAll),
 )

@@ -6,6 +6,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/forge/platform/internal/agent"
+	agenthandler "github.com/forge/platform/internal/agent/handler"
+	"github.com/forge/platform/internal/agent/processor"
 	"github.com/forge/platform/internal/config"
 	"github.com/forge/platform/internal/handler"
 	"github.com/forge/platform/internal/logger"
@@ -20,6 +22,8 @@ func main() {
 		// Core modules
 		logger.Module,
 		agent.Module,
+		processor.Module,
+		agenthandler.Module,
 		server.Module,
 		handler.Module,
 

@@ -17,6 +17,13 @@ type PodID struct {
 	AgentID string
 }
 
+func NewPodID(userID, agentID string) *PodID {
+	return &PodID{
+		UserID:  userID,
+		AgentID: agentID,
+	}
+}
+
 // Name returns the Kubernetes pod name for this PodID
 func (p PodID) Name() string {
 	return fmt.Sprintf("%s-%s", p.UserID, p.AgentID)
@@ -51,7 +58,7 @@ func NewManager(opts ManagerOpts) (*Manager, error) {
 	}, nil
 }
 
-func (m *Manager) NewPod(ctx context.Context, podID PodID) error {
+func (m *Manager) CreatePod(ctx context.Context, podID PodID) error {
 	newPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: podID.Name(),
@@ -153,7 +160,7 @@ func (m *Manager) RestartPod(ctx context.Context, podID PodID) error {
 		}
 	}
 
-	if err := m.NewPod(ctx, podID); err != nil {
+	if err := m.CreatePod(ctx, podID); err != nil {
 		return fmt.Errorf("error creating pod during restart: %w", err)
 	}
 
