@@ -38,7 +38,7 @@ This document defines the tasks required to enable the platform to communicate w
 | Task 1 | ✅ Complete | GetPodAddress - Pod address resolution |
 | Task 2 | ✅ Complete | WaitForPodReady - Pod readiness waiting |
 | Task 3 | ✅ Complete | Agent Client Factory |
-| Task 4 | 🟡 Stubbed | Processor refactor (needs full implementation) |
+| Task 4 | ✅ Complete | Processor refactor with K8s-based discovery |
 | Task 5 | 🟡 Stubbed | Handler updates (needs full implementation) |
 | Task 6 | 🟡 Partial | Cleanup (registry removed, fx wiring needs verification) |
 | Task 7 | ❌ Not Started | Integration tests |
@@ -142,102 +142,67 @@ func NewClientWithHTTPClient(baseURL string, httpClient *http.Client) agentv1con
 
 ---
 
-## Task 4: Refactor Processor to Use K8s-Based Discovery 🟡 STUBBED
+## Task 4: Refactor Processor to Use K8s-Based Discovery ✅ COMPLETE
 
 **File**: `platform/internal/agent/processor/processor.go`
 
-**Status**: Currently stubbed with basic `CreateAgent` and `DeleteAgent`. Needs full implementation.
+**Status**: Implemented and tested.
 
-### Current State (Stubbed)
+### Implementation
+
+All methods have been implemented with full K8s-based discovery and RPC support:
 
 ```go
 type Processor struct {
     k8m *k8s.Manager
 }
 
+// Lifecycle methods
 func (p *Processor) CreateAgent(ctx context.Context, userID string) (*k8s.PodID, error)
-func (p *Processor) DeleteAgent(ctx context.Context, userID, agentID string) error
-```
-
-### Methods to Implement
-
-#### CreateAgent (enhance existing)
-
-```go
-func (p *Processor) CreateAgent(ctx context.Context, userID string) (*k8s.PodID, error)
-```
-
-Current implementation creates pod but doesn't wait for ready. Should:
-1. Generate agent ID
-2. Create PodID from userID + agentID
-3. Call `k8m.CreatePod(ctx, podID)`
-4. Call `k8m.WaitForPodReady(ctx, podID)` - **ADD THIS**
-5. Return the PodID
-
-#### DeleteAgent (enhance existing)
-
-```go
 func (p *Processor) DeleteAgent(ctx context.Context, userID, agentID string, graceful bool) error
-```
 
-Current implementation just closes pod. Should:
-1. Create PodID from userID + agentID
-2. If graceful:
-   - Try to get pod address via `k8m.GetPodAddress(ctx, podID)`
-   - If successful, create client and call `Shutdown(graceful: true)`
-   - Ignore errors (pod might already be down)
-3. Call `k8m.ClosePod(ctx, podID)`
+// Query methods
+func (p *Processor) ListAgents(ctx context.Context, userID string) ([]k8s.PodID, error)
+func (p *Processor) GetAgent(ctx context.Context, userID, agentID string) (*corev1.Pod, error)
 
-#### GetStatus (NEW)
-
-```go
+// RPC methods
 func (p *Processor) GetStatus(ctx context.Context, userID, agentID string) (*agentv1.GetStatusResponse, error)
-```
-
-1. Create PodID from userID + agentID
-2. Get address via `k8m.GetPodAddress(ctx, podID)`
-3. Create client via `agent.NewClient(address)`
-4. Call `client.GetStatus(ctx, &agentv1.GetStatusRequest{})`
-5. Return response
-
-#### ConnectToAgent (NEW)
-
-```go
 func (p *Processor) ConnectToAgent(ctx context.Context, userID, agentID string) (*connect.BidiStreamForClient[agentv1.AgentCommand, agentv1.AgentEvent], error)
 ```
 
-1. Create PodID from userID + agentID
-2. Get address via `k8m.GetPodAddress(ctx, podID)`
-3. Create client via `agent.NewClient(address)`
-4. Call `client.Connect(ctx)`
-5. Return the stream
+### Key Features
 
-#### ListAgents (NEW)
+- **CreateAgent**: Creates pod and waits for it to become ready via `WaitForPodReady`. Includes rollback (pod cleanup) if waiting fails.
+- **DeleteAgent**: Supports graceful shutdown via RPC `Shutdown` call before deleting pod. Graceful errors are ignored (agent may be unreachable).
+- **ListAgents**: Lists all agent pods for a user by extracting PodIDs from pod labels.
+- **GetAgent**: Returns full pod details from K8s.
+- **GetStatus**: Gets real-time agent status via RPC call.
+- **ConnectToAgent**: Establishes bidirectional streaming connection to agent.
+
+### Tests
+
+Comprehensive unit tests in `processor_test.go` covering:
+
+- ListAgents: empty list, single agent, multiple agents (filtering by user)
+- GetAgent: found, not found
+- GetStatus: agent not found, agent not ready (no IP)
+- DeleteAgent: force delete, not found, graceful with unreachable agent
+- CreateAgent: success (with watch simulation), context cancellation (with cleanup verification)
+- ConnectToAgent: agent not found, agent not ready, returns stream
+
+### Handler Update
+
+The handler's `Delete` endpoint was updated to support the new `graceful` parameter:
 
 ```go
-func (p *Processor) ListAgents(ctx context.Context, userID string) ([]k8s.PodID, error)
+// DELETE /api/v1/agents/:id?user_id=xxx&graceful=true
+graceful := c.QueryParam("graceful") == "true"
+h.processor.DeleteAgent(ctx, userID, agentID, graceful)
 ```
 
-1. Call `k8m.ListPodsForUser(ctx, userID)`
-2. Extract PodIDs from pod labels
-3. Return list
+### Helper Added
 
-#### GetAgent (NEW)
-
-```go
-func (p *Processor) GetAgent(ctx context.Context, userID, agentID string) (*corev1.Pod, error)
-```
-
-1. Create PodID
-2. Call `k8m.GetPod(ctx, podID)`
-3. Return pod
-
-### Considerations
-
-- Every method that needs to call the agent must: get pod → get address → create client → call
-- This is intentionally stateless - no caching of clients or addresses
-- Errors from K8s (pod not found) vs errors from agent (RPC failed) should be distinguishable
-- Consider wrapping errors with more context
+Added `NewManagerWithClientset` to `k8s/client.go` for testing with fake clientsets.
 
 ---
 
@@ -370,12 +335,12 @@ go vet ./...    # Catch issues
                                │
                                ▼
 ┌──────────────────────────────────────────────────────┐
-│ Task 4: Processor (enhance stubbed implementation)   │  ◄── NEXT
+│ Task 4: Processor ✅ COMPLETE                        │
 └──────────────────────┬───────────────────────────────┘
                        │
                        ▼
 ┌──────────────────────────────────────────────────────┐
-│ Task 5: Handler (enhance stubbed implementation)     │
+│ Task 5: Handler (enhance stubbed implementation)     │  ◄── NEXT
 └──────────────────────┬───────────────────────────────┘
                        │
                        ▼
@@ -389,4 +354,4 @@ go vet ./...    # Catch issues
 └──────────────────────────────────────────────────────┘
 ```
 
-**Note**: Tasks 1, 2, and 3 are complete. The next step is Task 4 (Processor refactor), which can now use the client factory to communicate with agents.
+**Note**: Tasks 1, 2, 3, and 4 are complete. The next step is Task 5 (Handler updates), which should use the new processor methods to implement List, Get, and enhance Create/Delete endpoints.
