@@ -4,18 +4,15 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-
-	"github.com/forge/platform/internal/agent"
 )
 
 // HealthHandler handles health check endpoints
-type HealthHandler struct {
-	registry *agent.Registry
-}
+// TODO: Registry was deleted, update when processor is refactored (see TASKS.md Task 6)
+type HealthHandler struct{}
 
 // NewHealthHandler creates a new health handler
-func NewHealthHandler(registry *agent.Registry) *HealthHandler {
-	return &HealthHandler{registry: registry}
+func NewHealthHandler() *HealthHandler {
+	return &HealthHandler{}
 }
 
 // Register registers health check routes
@@ -32,7 +29,6 @@ func (h *HealthHandler) Healthz(c echo.Context) error {
 // Readyz handles GET /readyz
 func (h *HealthHandler) Readyz(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"status":      "ready",
-		"agent_count": h.registry.Count(),
+		"status": "ready",
 	})
 }
