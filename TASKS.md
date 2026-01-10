@@ -4,50 +4,54 @@ This document defines the tasks required to enable the platform to communicate w
 
 ## Architecture Overview
 
+**Important**: This repository is the **Infrastructure** layer only. It is stateless and acts as a "dumb pipe" between external Products and Agents. See CLAUDE.md for full architecture details.
+
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Platform (Go)                           │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────┐ │
-│  │   Handler   │───▶│  Processor  │───▶│    K8s Manager      │ │
-│  └─────────────┘    └──────┬──────┘    └──────────┬──────────┘ │
-│                            │                      │             │
-│                            │ CreateClient()       │ GetPodAddr  │
-│                            ▼                      ▼             │
-│                     ┌─────────────┐        ┌───────────┐        │
-│                     │AgentClient  │        │ K8s API   │        │
-│                     │  (Connect)  │        └───────────┘        │
-│                     └──────┬──────┘                             │
-└────────────────────────────┼────────────────────────────────────┘
-                             │ ConnectRPC
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    K8s Cluster                                  │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │  Agent Pod (user-123-agent-456)                          │  │
-│  │  Labels: user-id=123, agent-id=456                       │  │
-│  │  ┌────────────────────────────────────────────────────┐  │  │
-│  │  │  claudecode container (port 8080)                  │  │  │
-│  │  │  - AgentService.Connect (bidi stream)              │  │  │
-│  │  │  - AgentService.GetStatus (unary)                  │  │  │
-│  │  │  - AgentService.Shutdown (unary)                   │  │  │
-│  │  └────────────────────────────────────────────────────┘  │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+                                    ┌─────────────────────────────────────────────────────────┐
+                                    │                    INFRASTRUCTURE                        │
+                                    │                     (this repo)                          │
+┌─────────────────┐                 │  ┌─────────────────┐      gRPC       ┌───────────────┐  │
+│     Product     │  HTTP/WebSocket │  │    Platform     │◄───────────────►│  Agent (Pod)  │  │
+│   (external)    │◄───────────────►│  │   (Go/Echo)     │                 │  (Bun/TS)     │  │
+│                 │                 │  └─────────────────┘                 └───────────────┘  │
+│  - Stores msgs  │   Commands ──►  │         │                                   │           │
+│  - Business     │   ◄── Stream    │         ▼                                   ▼           │
+│    logic        │                 │  ┌─────────────────┐                 ┌───────────────┐  │
+│  - User mgmt    │                 │  │   Kubernetes    │                 │ Claude SDK    │  │
+└─────────────────┘                 │  │  (Pod Mgmt)     │                 │ (AI Runtime)  │  │
+                                    │  └─────────────────┘                 └───────────────┘  │
+                                    └─────────────────────────────────────────────────────────┘
 ```
 
-**Key Principle**: Kubernetes is the source of truth. No in-memory registry needed.
+**Key Principles:**
+- Infrastructure is **stateless** - does NOT store message history
+- Infrastructure is a **dumb pipe** - routes commands and streams output
+- Products register webhooks/WebSocket to receive agent output streams
+- Kubernetes is the source of truth for agent state (no in-memory registry)
 
 ---
 
-## Task 1: Add Pod Address Resolution to K8s Manager
+## Task Status Summary
+
+| Task | Status | Description |
+|------|--------|-------------|
+| Task 1 | ✅ Complete | GetPodAddress - Pod address resolution |
+| Task 2 | ✅ Complete | WaitForPodReady - Pod readiness waiting |
+| Task 3 | ❌ Not Started | Agent Client Factory |
+| Task 4 | 🟡 Stubbed | Processor refactor (needs full implementation) |
+| Task 5 | 🟡 Stubbed | Handler updates (needs full implementation) |
+| Task 6 | 🟡 Partial | Cleanup (registry removed, fx wiring needs verification) |
+| Task 7 | ❌ Not Started | Integration tests |
+
+---
+
+## Task 1: Add Pod Address Resolution to K8s Manager ✅ COMPLETE
 
 **File**: `platform/internal/k8s/client.go`
 
-**Goal**: Add a method to retrieve the ConnectRPC address for an agent pod.
+**Status**: Implemented and tested.
 
 ### Implementation
-
-Add a new method `GetPodAddress` to the `Manager` struct:
 
 ```go
 // GetPodAddress returns the ConnectRPC base URL for the given pod.
@@ -55,94 +59,36 @@ Add a new method `GetPodAddress` to the `Manager` struct:
 func (m *Manager) GetPodAddress(ctx context.Context, podID PodID) (string, error)
 ```
 
-### Steps
-
-1. Call `m.GetPod(ctx, podID)` to retrieve the pod
-2. Check `pod.Status.PodIP` is not empty
-3. Return formatted address: `http://<podIP>:8080`
-
-### Considerations
-
-- The port (8080) is hardcoded in both the agent and pod spec - consider making this configurable via `ContainerConfig` or a constant
-- Pod IP is only available after the pod is scheduled and the network is set up
-- If `PodIP` is empty, return a descriptive error indicating the pod isn't ready yet
-- This method is intentionally simple - it doesn't wait for readiness, just returns current state
-
-### Tests
-
-- Pod exists with IP → returns `http://<ip>:8080`
-- Pod exists without IP → returns error
-- Pod doesn't exist → returns error
+Returns formatted address: `http://<podIP>:8080`
 
 ---
 
-## Task 2: Add Pod Readiness Waiting to K8s Manager
+## Task 2: Add Pod Readiness Waiting to K8s Manager ✅ COMPLETE
 
 **File**: `platform/internal/k8s/client.go`
 
-**Goal**: Add a method that waits for a pod to be ready and returns the pod with its IP.
+**Status**: Implemented with tests in `client_test.go`.
 
 ### Implementation
-
-Add a new method `WaitForPodReady` that uses the existing `WatchPod` function:
 
 ```go
 // WaitForPodReady blocks until the pod is in Ready condition or the context is cancelled.
 // Returns the pod with its assigned IP address once ready.
 func (m *Manager) WaitForPodReady(ctx context.Context, podID PodID) (*corev1.Pod, error)
+
+// isPodReady returns true if the pod is running, has an IP, and all containers are ready
+func isPodReady(pod *corev1.Pod) bool
 ```
 
-### Steps
-
-1. Call `m.WatchPod(ctx, podID)` to get the event channel
-2. Iterate over events from the channel
-3. For each `watch.Added` or `watch.Modified` event:
-   - Check if pod phase is `corev1.PodRunning`
-   - Check if all containers are ready via `pod.Status.ContainerStatuses`
-   - Check if `pod.Status.PodIP` is assigned
-4. When all conditions met, return the pod
-5. Handle `watch.Deleted` → return error (pod was deleted while waiting)
-6. Handle context cancellation → return `ctx.Err()`
-
-### Helper Function
-
-Create a helper to check pod readiness:
-
-```go
-// isPodReady returns true if the pod is running and all containers are ready
-func isPodReady(pod *corev1.Pod) bool {
-    if pod.Status.Phase != corev1.PodRunning {
-        return false
-    }
-    if pod.Status.PodIP == "" {
-        return false
-    }
-    for _, cs := range pod.Status.ContainerStatuses {
-        if !cs.Ready {
-            return false
-        }
-    }
-    return true
-}
-```
-
-### Considerations
-
-- Use a context with timeout at the call site (don't hardcode timeout here)
-- The existing `WatchPod` already handles the watch setup and error cases
-- Consider adding an initial check before watching (pod might already be ready)
-- Log progress for debugging (e.g., "waiting for pod X, current phase: Y")
-
-### Tests
-
-- Pod becomes ready → returns pod with IP
-- Pod is deleted while waiting → returns error
-- Context cancelled → returns context error
-- Pod already ready when called → returns immediately
+### Key Features
+- Initial check before watching (returns immediately if already ready)
+- Uses cancellable child context for proper cleanup of WatchPod goroutine
+- Handles pod deletion, context cancellation, and watch errors
+- 12 unit tests covering all scenarios
 
 ---
 
-## Task 3: Create Agent Client Factory
+## Task 3: Create Agent Client Factory ❌ NOT STARTED
 
 **File**: `platform/internal/agent/client.go` (new file)
 
@@ -183,29 +129,6 @@ func NewClient(baseURL string) agentv1connect.AgentServiceClient {
 - Clients are cheap to create - no need to cache them
 - Consider adding a variant that accepts `*http.Client` for testing
 
-### Optional Enhancement
-
-For better testability and future extensibility:
-
-```go
-// ClientConfig holds configuration for agent clients
-type ClientConfig struct {
-    HTTPClient *http.Client
-    Options    []connect.ClientOption
-}
-
-// DefaultClientConfig returns the default client configuration
-func DefaultClientConfig() *ClientConfig {
-    return &ClientConfig{
-        HTTPClient: http.DefaultClient,
-        Options:    []connect.ClientOption{connect.WithGRPC()},
-    }
-}
-
-// NewClientWithConfig creates a client with custom configuration
-func NewClientWithConfig(baseURL string, cfg *ClientConfig) agentv1connect.AgentServiceClient
-```
-
 ### Tests
 
 - Creates valid client that implements the interface
@@ -213,64 +136,45 @@ func NewClientWithConfig(baseURL string, cfg *ClientConfig) agentv1connect.Agent
 
 ---
 
-## Task 4: Refactor Processor to Use K8s-Based Discovery
+## Task 4: Refactor Processor to Use K8s-Based Discovery 🟡 STUBBED
 
 **File**: `platform/internal/agent/processor/processor.go`
 
-**Goal**: Rewrite the Processor to use K8s as source of truth and create RPC clients on-demand.
+**Status**: Currently stubbed with basic `CreateAgent` and `DeleteAgent`. Needs full implementation.
 
-### Current State
-
-The processor has broken references to a deleted `registry` and incomplete method implementations.
-
-### New Implementation
+### Current State (Stubbed)
 
 ```go
-package processor
-
-import (
-    "context"
-    "fmt"
-    "time"
-
-    "connectrpc.com/connect"
-    agentv1 "github.com/forge/platform/gen/agent/v1"
-    "github.com/forge/platform/gen/agent/v1/agentv1connect"
-    "github.com/forge/platform/internal/agent"
-    "github.com/forge/platform/internal/k8s"
-)
-
 type Processor struct {
     k8m *k8s.Manager
 }
 
-func NewProcessor(k8sManager *k8s.Manager) *Processor {
-    return &Processor{k8m: k8sManager}
-}
+func (p *Processor) CreateAgent(ctx context.Context, userID string) (*k8s.PodID, error)
+func (p *Processor) DeleteAgent(ctx context.Context, userID, agentID string) error
 ```
 
 ### Methods to Implement
 
-#### CreateAgent
+#### CreateAgent (enhance existing)
 
 ```go
 func (p *Processor) CreateAgent(ctx context.Context, userID string) (*k8s.PodID, error)
 ```
 
+Current implementation creates pod but doesn't wait for ready. Should:
 1. Generate agent ID
 2. Create PodID from userID + agentID
 3. Call `k8m.CreatePod(ctx, podID)`
-4. Call `k8m.WaitForPodReady(ctx, podID)` - ensures pod is ready before returning
+4. Call `k8m.WaitForPodReady(ctx, podID)` - **ADD THIS**
 5. Return the PodID
 
-**Consideration**: The caller should use a context with appropriate timeout.
-
-#### DeleteAgent
+#### DeleteAgent (enhance existing)
 
 ```go
 func (p *Processor) DeleteAgent(ctx context.Context, userID, agentID string, graceful bool) error
 ```
 
+Current implementation just closes pod. Should:
 1. Create PodID from userID + agentID
 2. If graceful:
    - Try to get pod address via `k8m.GetPodAddress(ctx, podID)`
@@ -278,7 +182,7 @@ func (p *Processor) DeleteAgent(ctx context.Context, userID, agentID string, gra
    - Ignore errors (pod might already be down)
 3. Call `k8m.ClosePod(ctx, podID)`
 
-#### GetStatus
+#### GetStatus (NEW)
 
 ```go
 func (p *Processor) GetStatus(ctx context.Context, userID, agentID string) (*agentv1.GetStatusResponse, error)
@@ -290,7 +194,7 @@ func (p *Processor) GetStatus(ctx context.Context, userID, agentID string) (*age
 4. Call `client.GetStatus(ctx, &agentv1.GetStatusRequest{})`
 5. Return response
 
-#### ConnectToAgent
+#### ConnectToAgent (NEW)
 
 ```go
 func (p *Processor) ConnectToAgent(ctx context.Context, userID, agentID string) (*connect.BidiStreamForClient[agentv1.AgentCommand, agentv1.AgentEvent], error)
@@ -302,7 +206,7 @@ func (p *Processor) ConnectToAgent(ctx context.Context, userID, agentID string) 
 4. Call `client.Connect(ctx)`
 5. Return the stream
 
-#### ListAgents
+#### ListAgents (NEW)
 
 ```go
 func (p *Processor) ListAgents(ctx context.Context, userID string) ([]k8s.PodID, error)
@@ -312,7 +216,7 @@ func (p *Processor) ListAgents(ctx context.Context, userID string) ([]k8s.PodID,
 2. Extract PodIDs from pod labels
 3. Return list
 
-#### GetAgent
+#### GetAgent (NEW)
 
 ```go
 func (p *Processor) GetAgent(ctx context.Context, userID, agentID string) (*corev1.Pod, error)
@@ -329,30 +233,24 @@ func (p *Processor) GetAgent(ctx context.Context, userID, agentID string) (*core
 - Errors from K8s (pod not found) vs errors from agent (RPC failed) should be distinguishable
 - Consider wrapping errors with more context
 
-### Remove
-
-- Delete references to `registry`
-- Delete `agent.Info` and `agent.StreamConnection` types (no longer needed)
-- Remove or update the `agent.Module` fx module
-
 ---
 
-## Task 5: Update Handler to Match New Processor Interface
+## Task 5: Update Handler to Match New Processor Interface 🟡 STUBBED
 
 **File**: `platform/internal/agent/handler/handler.go`
 
-**Goal**: Update the HTTP handler to work with the refactored Processor.
+**Status**: Currently stubbed with basic structure. Needs full implementation.
+
+### Current State (Stubbed)
+
+- `Create` - Works but response is minimal
+- `List` - Returns empty list (TODO)
+- `Get` - Returns "not implemented" (TODO)
+- `Delete` - Works but requires `user_id` query param
 
 ### Changes Required
 
-1. **Update `CreateAgentRequest`**: Remove `Address` field (we don't need it - K8s assigns the IP)
-
-2. **Update `Create` handler**:
-   - Only require `owner_id` 
-   - Call `processor.CreateAgent(ctx, ownerID)`
-   - Return the created PodID info
-
-3. **Update `AgentResponse`**: Change to match what we can get from K8s:
+1. **Update `AgentResponse`**: Change to match what we can get from K8s:
    ```go
    type AgentResponse struct {
        UserID    string `json:"user_id"`
@@ -365,19 +263,22 @@ func (p *Processor) GetAgent(ctx context.Context, userID, agentID string) (*core
    }
    ```
 
-4. **Update `Get` handler**:
+2. **Implement `Get` handler**:
    - Parse userID from query param or auth context
    - Get agentID from path param
    - Call `processor.GetAgent(ctx, userID, agentID)`
    - Optionally call `processor.GetStatus()` if `?refresh=true`
 
-5. **Update `Delete` handler**:
-   - Need both userID and agentID
-   - Pass graceful flag to processor
-
-6. **Update `List` handler**:
+3. **Implement `List` handler**:
    - Call `processor.ListAgents(ctx, userID)`
    - Convert to response format
+
+4. **Enhance `Create` handler**:
+   - Return full `AgentResponse` with pod info
+
+5. **Enhance `Delete` handler**:
+   - Add `graceful` query param support
+   - Pass graceful flag to processor
 
 ### Considerations
 
@@ -387,39 +288,35 @@ func (p *Processor) GetAgent(ctx context.Context, userID, agentID string) (*core
 
 ---
 
-## Task 6: Clean Up Deleted/Orphaned Code
+## Task 6: Clean Up Deleted/Orphaned Code 🟡 PARTIAL
 
-**Files**: 
-- `platform/internal/agent/module.go`
-- `platform/internal/handler/module.go`
+**Status**: Registry references removed. Fx wiring needs verification.
 
-**Goal**: Remove references to deleted code and ensure fx wiring is correct.
+### Completed
 
-### Changes
+- [x] `agent/module.go` - `NewRegistry` commented out
+- [x] `handler/health.go` - Registry dependency removed
+- [x] `processor/processor.go` - Removed broken registry references
 
-1. **`agent/module.go`**: 
-   - Remove `NewRegistry` from fx.Provide (Registry no longer exists)
-   - If module is empty, consider removing it entirely
+### Remaining
 
-2. **Verify fx wiring**:
-   - `processor.Module` provides `NewProcessor`
-   - `handler.Module` provides handler
-   - Ensure `k8s.Manager` is provided somewhere and injected into Processor
-
-3. **Delete orphaned types**:
-   - `agent.Info` (was in registry.go)
-   - `agent.State` (was in registry.go)  
-   - `agent.StreamConnection` (was in registry.go)
+- [ ] Verify fx wiring is correct:
+  - `processor.Module` should provide `NewProcessor`
+  - `handler.Module` should provide handler
+  - Ensure `k8s.Manager` is provided and injected into Processor
+- [ ] Check if `agent/module.go` should be removed entirely (currently empty)
+- [ ] Check for any remaining orphaned types in agent package
 
 ### Verification
 
-- Run `go build ./...` to ensure no compilation errors
-- Run `go vet ./...` to catch issues
-- Check for unused imports
+```bash
+go build ./...  # Ensure no compilation errors
+go vet ./...    # Catch issues
+```
 
 ---
 
-## Task 7: Add Integration Test for Full Flow
+## Task 7: Add Integration Test for Full Flow ❌ NOT STARTED
 
 **File**: `platform/internal/agent/processor/processor_test.go` (new file)
 
@@ -455,40 +352,35 @@ func (p *Processor) GetAgent(ctx context.Context, userID, agentID string) (*core
 - Clean up pods after tests (even on failure)
 - Consider using `testing.Short()` to skip in unit test runs
 
-### Test Helpers
-
-```go
-func setupTestProcessor(t *testing.T) (*Processor, func()) {
-    // Create k8s manager pointing to test cluster
-    // Return processor and cleanup function
-}
-
-func waitForPodDeleted(ctx context.Context, k8m *k8s.Manager, podID k8s.PodID) error {
-    // Helper to wait for pod deletion
-}
-```
-
 ---
 
-## Task Order Summary
-
-These tasks can be completed in parallel by different developers, with the following dependencies:
+## Recommended Task Order
 
 ```
-Task 1 (GetPodAddress) ─────┐
-                            ├──▶ Task 4 (Processor) ──▶ Task 5 (Handler)
-Task 2 (WaitForPodReady) ───┤                                  │
-                            │                                  │
-Task 3 (Client Factory) ────┘                                  │
-                                                               │
-Task 6 (Cleanup) ◀─────────────────────────────────────────────┘
-
-Task 7 (Integration Tests) - Can start after Tasks 1-4, runs against completed system
+                    ┌──────────────────────┐
+                    │ Task 3: Client       │
+                    │ Factory (NEW)        │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────┐
+│ Task 4: Processor (enhance stubbed implementation)   │
+└──────────────────────┬───────────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────────┐
+│ Task 5: Handler (enhance stubbed implementation)     │
+└──────────────────────┬───────────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────────┐
+│ Task 6: Cleanup (verify fx wiring)                   │
+└──────────────────────┬───────────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────────┐
+│ Task 7: Integration Tests                            │
+└──────────────────────────────────────────────────────┘
 ```
 
-**Parallel work possible:**
-- Tasks 1, 2, 3 can all be done in parallel
-- Task 4 needs 1, 2, 3 to be merged first
-- Task 5 needs 4
-- Task 6 can be done alongside 4-5
-- Task 7 after everything else
+**Note**: Tasks 1 and 2 are complete. The next step is Task 3 (Client Factory), which unblocks the rest of the work.
