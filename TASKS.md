@@ -37,7 +37,7 @@ This document defines the tasks required to enable the platform to communicate w
 |------|--------|-------------|
 | Task 1 | ✅ Complete | GetPodAddress - Pod address resolution |
 | Task 2 | ✅ Complete | WaitForPodReady - Pod readiness waiting |
-| Task 3 | ❌ Not Started | Agent Client Factory |
+| Task 3 | ✅ Complete | Agent Client Factory |
 | Task 4 | 🟡 Stubbed | Processor refactor (needs full implementation) |
 | Task 5 | 🟡 Stubbed | Handler updates (needs full implementation) |
 | Task 6 | 🟡 Partial | Cleanup (registry removed, fx wiring needs verification) |
@@ -88,11 +88,11 @@ func isPodReady(pod *corev1.Pod) bool
 
 ---
 
-## Task 3: Create Agent Client Factory ❌ NOT STARTED
+## Task 3: Create Agent Client Factory ✅ COMPLETE
 
-**File**: `platform/internal/agent/client.go` (new file)
+**File**: `platform/internal/agent/client.go`
 
-**Goal**: Provide a simple, stateless way to create ConnectRPC clients for agents.
+**Status**: Implemented with tests in `client_test.go`.
 
 ### Implementation
 
@@ -101,38 +101,44 @@ package agent
 
 import (
     "net/http"
-    "connectrpc.com/connect"
     "github.com/forge/platform/gen/agent/v1/agentv1connect"
 )
 
 // NewClient creates a new AgentService client for the given base URL.
 // The baseURL should be in the format "http://<ip>:8080".
 // Clients are stateless and safe to create per-request.
+// Uses the Connect protocol (HTTP/1.1 compatible, human-readable).
 func NewClient(baseURL string) agentv1connect.AgentServiceClient {
     return agentv1connect.NewAgentServiceClient(
         http.DefaultClient,
         baseURL,
-        connect.WithGRPC(),
+    )
+}
+
+// NewClientWithHTTPClient creates a new AgentService client with a custom HTTP client.
+// Useful for testing or when custom transport configuration is needed.
+func NewClientWithHTTPClient(baseURL string, httpClient *http.Client) agentv1connect.AgentServiceClient {
+    return agentv1connect.NewAgentServiceClient(
+        httpClient,
+        baseURL,
     )
 }
 ```
 
-### Considerations
+### Key Features
 
-- Keep it simple - just a factory function, no struct needed
-- Use `connect.WithGRPC()` since the agent uses gRPC protocol
-- `http.DefaultClient` is fine for now; could be extended later for:
-  - Custom timeouts
-  - Connection pooling
-  - TLS configuration
-  - Tracing/metrics middleware
-- Clients are cheap to create - no need to cache them
-- Consider adding a variant that accepts `*http.Client` for testing
+- Two factory functions: `NewClient` (simple) and `NewClientWithHTTPClient` (for testing/custom configs)
+- Uses Connect protocol (not gRPC) for HTTP/1.1 compatibility
+- Stateless - clients are cheap to create per-request
+- No struct needed - just simple factory functions
 
 ### Tests
 
-- Creates valid client that implements the interface
-- Client can be used to make calls (integration test with mock server)
+- `TestNewClient_ReturnsValidClient` - Basic smoke test
+- `TestNewClient_WithDifferentURLFormats` - URL format variations (port, localhost, DNS name)
+- `TestNewClientWithHTTPClient_UsesProvidedClient` - Custom HTTP client injection
+- `TestNewClient_CanCallGetStatus` - Integration test with mock server
+- `TestNewClient_CanCallShutdown` - Integration test with mock server
 
 ---
 
@@ -359,12 +365,12 @@ go vet ./...    # Catch issues
 ```
                     ┌──────────────────────┐
                     │ Task 3: Client       │
-                    │ Factory (NEW)        │
+                    │ Factory ✅ COMPLETE  │
                     └──────────┬───────────┘
                                │
                                ▼
 ┌──────────────────────────────────────────────────────┐
-│ Task 4: Processor (enhance stubbed implementation)   │
+│ Task 4: Processor (enhance stubbed implementation)   │  ◄── NEXT
 └──────────────────────┬───────────────────────────────┘
                        │
                        ▼
@@ -383,4 +389,4 @@ go vet ./...    # Catch issues
 └──────────────────────────────────────────────────────┘
 ```
 
-**Note**: Tasks 1 and 2 are complete. The next step is Task 3 (Client Factory), which unblocks the rest of the work.
+**Note**: Tasks 1, 2, and 3 are complete. The next step is Task 4 (Processor refactor), which can now use the client factory to communicate with agents.
