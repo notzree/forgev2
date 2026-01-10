@@ -11,6 +11,11 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+const (
+	// DefaultAgentPort is the default port that agent containers listen on for gRPC/ConnectRPC
+	DefaultAgentPort = 8080
+)
+
 // PodID uniquely identifies a pod by user and agent
 type PodID struct {
 	UserID  string
@@ -73,7 +78,7 @@ func (m *Manager) CreatePod(ctx context.Context, podID PodID) error {
 					Name:  "forge-agent",
 					Image: m.agentImage,
 					Ports: []corev1.ContainerPort{
-						{ContainerPort: 8080}, //todo: richard figure out how to stop hard coding this lmfao
+						{ContainerPort: DefaultAgentPort},
 					},
 				},
 			},
@@ -96,6 +101,21 @@ func (m *Manager) GetPod(ctx context.Context, podID PodID) (*corev1.Pod, error) 
 		return nil, fmt.Errorf("failed to get pod %s: %w", podID.Name(), err)
 	}
 	return pod, nil
+}
+
+// GetPodAddress returns the ConnectRPC base URL for the given pod.
+// Returns an error if the pod doesn't exist or doesn't have an IP assigned.
+func (m *Manager) GetPodAddress(ctx context.Context, podID PodID) (string, error) {
+	pod, err := m.GetPod(ctx, podID)
+	if err != nil {
+		return "", err
+	}
+
+	if pod.Status.PodIP == "" {
+		return "", fmt.Errorf("pod %s has no IP assigned (phase: %s)", podID.Name(), pod.Status.Phase)
+	}
+
+	return fmt.Sprintf("http://%s:%d", pod.Status.PodIP, DefaultAgentPort), nil
 }
 
 func (m *Manager) ListPodsForUser(ctx context.Context, userID string) (*corev1.PodList, error) {
