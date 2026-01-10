@@ -4,22 +4,48 @@ This document provides comprehensive guidance for AI assistants working with the
 
 ## Project Overview
 
-**Forge** is a Claude Agent platform that runs Claude agents in containerized environments with bidirectional communication between agents and a central control platform. The architecture follows a microservices pattern where the platform orchestrates agent containers running in Kubernetes.
+**Forge** is a Claude Agent **infrastructure** platform that runs Claude agents in containerized environments. It provides stateless orchestration and acts as a "dumb pipe" between agents and external products/clients.
+
+### Architecture Philosophy: Infrastructure vs Product
+
+This repository contains only the **Infrastructure** layer:
+
+| Layer | Responsibility | This Repo? |
+|-------|---------------|------------|
+| **Infrastructure** | Agent orchestration, pod lifecycle, command routing, output streaming | ✅ Yes |
+| **Product** | Message persistence, business logic, user management, UI | ❌ No (external) |
+
+**Key principles:**
+- Infrastructure is **stateless** - it does NOT store message history
+- Infrastructure is a **dumb pipe** - it routes commands to agents and streams outputs to products
+- Products register webhooks to receive agent output streams
+- Products are responsible for persistence and business logic
 
 ### High-Level Architecture
 
 ```
-┌─────────────────┐     WebSocket      ┌─────────────────┐      gRPC       ┌─────────────────┐
-│   Web Client    │◄──────────────────►│    Platform     │◄───────────────►│  Agent (Pod)    │
-│  (Browser UI)   │                    │   (Go/Echo)     │                 │  (Bun/TS)       │
-└─────────────────┘                    └─────────────────┘                 └─────────────────┘
-                                              │                                    │
-                                              ▼                                    ▼
-                                       ┌─────────────────┐                 ┌─────────────────┐
-                                       │   Kubernetes    │                 │   Turso DB      │
-                                       │  (Pod Mgmt)     │                 │  (State Store)  │
-                                       └─────────────────┘                 └─────────────────┘
+                                    ┌─────────────────────────────────────────────────────────┐
+                                    │                    INFRASTRUCTURE                        │
+                                    │                     (this repo)                          │
+┌─────────────────┐                 │  ┌─────────────────┐      gRPC       ┌───────────────┐  │
+│     Product     │  HTTP/WebSocket │  │    Platform     │◄───────────────►│  Agent (Pod)  │  │
+│   (external)    │◄───────────────►│  │   (Go/Echo)     │                 │  (Bun/TS)     │  │
+│                 │                 │  └─────────────────┘                 └───────────────┘  │
+│  - Stores msgs  │   Commands ──►  │         │                                   │           │
+│  - Business     │   ◄── Stream    │         ▼                                   ▼           │
+│    logic        │                 │  ┌─────────────────┐                 ┌───────────────┐  │
+│  - User mgmt    │                 │  │   Kubernetes    │                 │ Claude SDK    │  │
+└─────────────────┘                 │  │  (Pod Mgmt)     │                 │ (AI Runtime)  │  │
+                                    │  └─────────────────┘                 └───────────────┘  │
+                                    └─────────────────────────────────────────────────────────┘
 ```
+
+### Data Flow
+
+1. **Product → Infrastructure**: Send commands (create agent, send message, interrupt, etc.)
+2. **Infrastructure → Agent**: Route commands via gRPC bidirectional stream
+3. **Agent → Infrastructure**: Stream responses (text, tool use, thinking, etc.)
+4. **Infrastructure → Product**: Forward stream via webhook/WebSocket (no persistence)
 
 ## Directory Structure
 
@@ -38,8 +64,10 @@ forgev2/
 ├── platform/                 # Go orchestration platform
 │   ├── cmd/server/           # Server entrypoint
 │   ├── internal/
-│   │   ├── agent/            # Agent registry & lifecycle management
-│   │   ├── handler/          # HTTP handlers (WebSocket, REST)
+│   │   ├── agent/            # Agent lifecycle management
+│   │   │   ├── processor/    # Business logic for agent operations
+│   │   │   └── handler/      # HTTP handlers for agent API
+│   │   ├── handler/          # HTTP handlers (health, WebSocket)
 │   │   ├── server/           # Echo setup, middleware, modules
 │   │   ├── logger/           # Zap logger configuration
 │   │   ├── errors/           # Custom error types
@@ -54,7 +82,7 @@ forgev2/
 │   └── buf.yaml              # Buf configuration
 ├── Makefile                  # Build, run, deploy targets
 ├── buf.gen.yaml              # Code generation config
-└── IMPLEMENTATION_PLAN.md    # Architecture documentation
+└── TASKS.md                  # Implementation tasks
 ```
 
 ## Technology Stack
@@ -63,14 +91,15 @@ forgev2/
 |-----------|-----------|---------|
 | Agent Runtime | TypeScript + Bun | Fast startup, Claude Agent SDK |
 | Agent Server | Fastify + Connect-RPC | gRPC server for agent communication |
-| Platform | Go 1.25 | High-performance orchestration |
+| Platform | Go 1.23+ | High-performance orchestration |
 | Web Framework | Echo v4 | HTTP server with middleware |
 | DI Framework | Uber Fx | Modular dependency injection |
 | Logging | Zap | Structured logging |
 | RPC | Connect-RPC/gRPC | Bidirectional streaming |
 | API Contracts | Protocol Buffers v3 | Type-safe message definitions |
 | Containers | Docker + Kubernetes | Agent isolation & orchestration |
-| Database | Turso (libsql) | State persistence |
+
+**Note**: The platform does NOT use a database - it is stateless. Products are responsible for persistence.
 
 ## Development Commands
 
@@ -94,11 +123,6 @@ make clean              # Remove generated code
 ```bash
 make run-agent          # Run agent: bun run src/index.ts
 make run-platform       # Run platform: go run ./cmd/server
-
-# Database
-make db-start           # Start PostgreSQL container
-make db-stop            # Stop PostgreSQL container
-make db-reset           # Reset database (removes all data)
 ```
 
 ### Container Builds
@@ -122,6 +146,14 @@ bun run typecheck       # TypeScript type checking
 bun run build           # Build to dist/
 ```
 
+### Testing
+
+```bash
+cd platform
+go test ./...           # Run all Go tests
+go test ./internal/k8s/... -v  # Run k8s tests with verbose output
+```
+
 ## Code Conventions
 
 ### Go (Platform)
@@ -135,6 +167,7 @@ bun run build           # Build to dist/
 - **Configuration**: Environment variables parsed via `github.com/caarlos0/env/v11`.
 - **Logging**: Use Zap logger injected via Fx. Structured fields preferred.
 - **Concurrency**: Use `sync.RWMutex` for shared state. Use goroutines with `sync.WaitGroup` for cleanup.
+- **Interfaces**: Use interfaces for testability (e.g., `kubernetes.Interface` instead of `*kubernetes.Clientset`).
 
 ### TypeScript (Agent)
 
@@ -175,20 +208,24 @@ The agent converts between Claude SDK types and protobuf messages:
 - Messages have sequence numbers (`seq`) for ordering
 - UUIDs for unique identification
 
-### WebSocket-to-gRPC Bridge
+### Stateless Streaming (Infrastructure Pattern)
 
-The platform translates WebSocket messages from web clients to gRPC calls:
+The platform acts as a stateless router:
 
-- `internal/handler/websocket.go` handles the protocol translation
-- Bidirectional goroutines for send/receive
-- Clean shutdown coordination
+1. Receives commands from products via HTTP/WebSocket
+2. Routes to appropriate agent pod via gRPC
+3. Streams agent output back to product
+4. **Does NOT persist** any messages - products handle storage
 
-### Registry Pattern
+### Pod Lifecycle Management
 
-Agent instances are tracked in an in-memory registry:
+The `k8s.Manager` handles Kubernetes operations:
 
-- `internal/agent/registry.go` - Thread-safe agent tracking
-- `internal/agent/manager.go` - Agent lifecycle (create, connect, delete)
+- `CreatePod` - Spawn new agent container
+- `WaitForPodReady` - Block until pod is ready with IP assigned
+- `GetPodAddress` - Get gRPC endpoint for agent
+- `ClosePod` - Terminate agent container
+- `WatchPod` - Monitor pod state changes
 
 ## Environment Variables
 
@@ -199,11 +236,12 @@ Agent instances are tracked in an in-memory registry:
 | `PORT` | `8080` | HTTP server port |
 | `DEBUG` | `false` | Enable debug mode |
 | `CORS_ORIGINS` | - | Comma-separated allowed origins |
-| `TURSO_URL` | - | Turso database URL |
-| `TURSO_AUTH_TOKEN` | - | Turso authentication token |
 | `SHUTDOWN_TIMEOUT` | `10s` | Graceful shutdown timeout |
 | `READ_TIMEOUT` | `10s` | HTTP read timeout |
 | `WRITE_TIMEOUT` | `10s` | HTTP write timeout |
+| `KUBE_CONFIG_PATH` | - | Path to kubeconfig file |
+| `AGENT_NAMESPACE` | `default` | Kubernetes namespace for agent pods |
+| `AGENT_IMAGE` | - | Docker image for agent containers |
 
 ### Agent
 
@@ -216,8 +254,6 @@ Agent instances are tracked in an in-memory registry:
 | `PERMISSION_MODE` | `acceptEdits` | Permission mode (default, acceptEdits, bypassPermissions) |
 | `ALLOWED_TOOLS` | Read,Write,Edit,Bash,Glob,Grep,WebSearch,WebFetch | Comma-separated allowed tools |
 | `ANTHROPIC_API_KEY` | - | Anthropic API key |
-| `TURSO_URL` | - | Turso database URL |
-| `TURSO_AUTH_TOKEN` | - | Turso auth token |
 
 ## API Contracts
 
@@ -260,10 +296,22 @@ service AgentService {
 
 ## Testing
 
-Currently, the project does not have a formal test suite. When adding tests:
+### Go Tests
 
-- **Go**: Use standard `go test` with table-driven tests. Place in `*_test.go` files.
-- **TypeScript**: Use Bun's built-in test runner (`bun test`).
+```bash
+go test ./...                    # Run all tests
+go test ./internal/k8s/... -v    # Run k8s tests verbose
+go test -race ./...              # Run with race detector
+```
+
+The k8s package has comprehensive tests using `k8s.io/client-go/kubernetes/fake`.
+
+### TypeScript Tests
+
+```bash
+cd agent/claudecode
+bun test                         # Run all tests
+```
 
 ## Common Tasks
 
@@ -284,7 +332,7 @@ Currently, the project does not have a formal test suite. When adding tests:
 1. Add command to `AgentCommand.oneof` in `agent.proto`
 2. Run `make proto`
 3. Handle in agent's `src/services/agent-service.ts`
-4. Update platform's WebSocket handler if needed
+4. Update platform's handler if needed
 
 ## Troubleshooting
 
@@ -307,14 +355,24 @@ make clean && make proto
 cd agent/claudecode && bun run typecheck
 ```
 
+### K8s Tests Failing
+
+Ensure you're using a compatible Go version (1.23+):
+```bash
+go version
+GOTOOLCHAIN=local go test ./internal/k8s/...
+```
+
 ## Key Files Reference
 
 | Purpose | Go (Platform) | TypeScript (Agent) |
 |---------|---------------|-------------------|
 | Entry point | `cmd/server/main.go` | `src/index.ts` |
 | Configuration | `internal/config/config.go` | `src/config.ts` |
-| Agent logic | `internal/agent/manager.go` | `src/agent/core.ts` |
-| Handlers | `internal/handler/*.go` | `src/services/*.ts` |
+| Agent processor | `internal/agent/processor/processor.go` | `src/agent/core.ts` |
+| HTTP Handlers | `internal/handler/*.go` | - |
+| Agent Handlers | `internal/agent/handler/*.go` | `src/services/*.ts` |
+| K8s Management | `internal/k8s/client.go` | - |
 | Proto types | `gen/agent/v1/*.go` | `src/gen/agent/v1/*.ts` |
 | Middleware | `internal/server/middleware.go` | - |
 | Errors | `internal/errors/errors.go` | - |
