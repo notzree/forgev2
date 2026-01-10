@@ -42,7 +42,7 @@ type ManagerOpts struct {
 
 type Manager struct {
 	agentNamespace string
-	clientset      *kubernetes.Clientset
+	clientset      kubernetes.Interface
 	agentImage     string
 }
 
