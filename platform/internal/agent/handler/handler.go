@@ -85,12 +85,13 @@ func (h *Handler) Get(c echo.Context) error {
 func (h *Handler) Delete(c echo.Context) error {
 	agentID := c.Param("id")
 	userID := c.QueryParam("user_id")
+	graceful := c.QueryParam("graceful") == "true"
 
 	if userID == "" {
 		return errors.BadRequest("user_id query param is required")
 	}
 
-	if err := h.processor.DeleteAgent(c.Request().Context(), userID, agentID); err != nil {
+	if err := h.processor.DeleteAgent(c.Request().Context(), userID, agentID, graceful); err != nil {
 		return errors.NotFound(err.Error())
 	}
 

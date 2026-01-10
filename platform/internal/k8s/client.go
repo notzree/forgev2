@@ -63,6 +63,16 @@ func NewManager(opts ManagerOpts) (*Manager, error) {
 	}, nil
 }
 
+// NewManagerWithClientset creates a Manager with a provided clientset.
+// This is primarily useful for testing with fake clientsets.
+func NewManagerWithClientset(clientset kubernetes.Interface, namespace, agentImage string) *Manager {
+	return &Manager{
+		clientset:      clientset,
+		agentNamespace: namespace,
+		agentImage:     agentImage,
+	}
+}
+
 func (m *Manager) CreatePod(ctx context.Context, podID PodID) error {
 	newPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
