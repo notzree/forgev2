@@ -118,6 +118,51 @@ func (m *Manager) GetPodAddress(ctx context.Context, podID PodID) (string, error
 	return fmt.Sprintf("http://%s:%d", pod.Status.PodIP, DefaultAgentPort), nil
 }
 
+// WaitForPodReady blocks until the pod is in Ready condition or the context is cancelled.
+// Returns the pod with its assigned IP address once ready.
+func (m *Manager) WaitForPodReady(ctx context.Context, podID PodID) (*corev1.Pod, error) {
+	// Initial check - pod might already be ready
+	pod, err := m.GetPod(ctx, podID)
+	if err != nil {
+		return nil, err
+	}
+	if isPodReady(pod) {
+		return pod, nil
+	}
+
+	// Create a cancellable context for the watcher so it cleans up when we return
+	watchCtx, cancelWatch := context.WithCancel(ctx)
+	defer cancelWatch()
+
+	// Start watching for changes
+	events, err := m.WatchPod(watchCtx, podID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to watch pod %s: %w", podID.Name(), err)
+	}
+
+	for event := range events {
+		if event.Err != nil {
+			// Check if it's a context cancellation from the parent
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
+			}
+			return nil, fmt.Errorf("watch error while waiting for pod %s: %w", podID.Name(), event.Err)
+		}
+
+		switch event.Type {
+		case watch.Added, watch.Modified:
+			if isPodReady(event.Pod) {
+				return event.Pod, nil
+			}
+		case watch.Deleted:
+			return nil, fmt.Errorf("pod %s was deleted while waiting for it to become ready", podID.Name())
+		}
+	}
+
+	// Channel closed without pod becoming ready
+	return nil, fmt.Errorf("watch ended unexpectedly for pod %s", podID.Name())
+}
+
 func (m *Manager) ListPodsForUser(ctx context.Context, userID string) (*corev1.PodList, error) {
 	pods, err := m.clientset.CoreV1().Pods(m.agentNamespace).List(ctx, metav1.ListOptions{
 		LabelSelector: UserIDLabel(userID),
@@ -185,6 +230,22 @@ func (m *Manager) RestartPod(ctx context.Context, podID PodID) error {
 	}
 
 	return nil
+}
+
+// isPodReady returns true if the pod is running, has an IP, and all containers are ready
+func isPodReady(pod *corev1.Pod) bool {
+	if pod.Status.Phase != corev1.PodRunning {
+		return false
+	}
+	if pod.Status.PodIP == "" {
+		return false
+	}
+	for _, cs := range pod.Status.ContainerStatuses {
+		if !cs.Ready {
+			return false
+		}
+	}
+	return true
 }
 
 // PodEvent represents a pod state change event
