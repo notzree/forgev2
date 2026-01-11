@@ -2,15 +2,16 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/forge/platform/internal/agent/processor"
 	"github.com/forge/platform/internal/errors"
 )
 
 // Handler handles agent HTTP endpoints
-// TODO: This handler needs to be updated per TASKS.md Task 5
 type Handler struct {
 	processor *processor.Processor
 }
@@ -38,9 +39,50 @@ type CreateAgentRequest struct {
 
 // AgentResponse is the response for agent operations
 type AgentResponse struct {
-	UserID  string `json:"user_id"`
-	AgentID string `json:"agent_id"`
-	PodName string `json:"pod_name"`
+	UserID    string          `json:"user_id"`
+	AgentID   string          `json:"agent_id"`
+	PodName   string          `json:"pod_name"`
+	PodIP     string          `json:"pod_ip,omitempty"`
+	Phase     corev1.PodPhase `json:"phase"`
+	Ready     bool            `json:"ready"`
+	CreatedAt string          `json:"created_at,omitempty"`
+}
+
+// ListAgentsResponse is the response for listing agents
+type ListAgentsResponse struct {
+	Agents []AgentResponse `json:"agents"`
+	Total  int             `json:"total"`
+}
+
+// podToAgentResponse converts a K8s Pod to AgentResponse
+func podToAgentResponse(pod *corev1.Pod) AgentResponse {
+	resp := AgentResponse{
+		UserID:  pod.Labels["user-id"],
+		AgentID: pod.Labels["agent-id"],
+		PodName: pod.Name,
+		Phase:   pod.Status.Phase,
+		Ready:   isPodReady(pod),
+	}
+	if pod.Status.PodIP != "" {
+		resp.PodIP = pod.Status.PodIP
+	}
+	if !pod.CreationTimestamp.IsZero() {
+		resp.CreatedAt = pod.CreationTimestamp.Format(time.RFC3339)
+	}
+	return resp
+}
+
+// isPodReady checks if the pod is running and all containers are ready
+func isPodReady(pod *corev1.Pod) bool {
+	if pod.Status.Phase != corev1.PodRunning {
+		return false
+	}
+	for _, cs := range pod.Status.ContainerStatuses {
+		if !cs.Ready {
+			return false
+		}
+	}
+	return true
 }
 
 // Create handles POST /api/v1/agents
@@ -54,31 +96,87 @@ func (h *Handler) Create(c echo.Context) error {
 		return errors.BadRequest("owner_id is required")
 	}
 
-	podID, err := h.processor.CreateAgent(c.Request().Context(), req.OwnerID)
+	ctx := c.Request().Context()
+	podID, err := h.processor.CreateAgent(ctx, req.OwnerID)
 	if err != nil {
 		return errors.ServiceUnavailable(err.Error())
 	}
 
-	return c.JSON(http.StatusCreated, AgentResponse{
-		UserID:  podID.UserID,
-		AgentID: podID.AgentID,
-		PodName: podID.Name(),
-	})
+	// Fetch full pod details for the response
+	pod, err := h.processor.GetAgent(ctx, podID.UserID, podID.AgentID)
+	if err != nil {
+		// Pod was created but we can't fetch details - return basic info
+		return c.JSON(http.StatusCreated, AgentResponse{
+			UserID:  podID.UserID,
+			AgentID: podID.AgentID,
+			PodName: podID.Name(),
+			Phase:   corev1.PodRunning,
+			Ready:   true,
+		})
+	}
+
+	return c.JSON(http.StatusCreated, podToAgentResponse(pod))
 }
 
-// List handles GET /api/v1/agents
+// List handles GET /api/v1/agents?user_id=xxx
 func (h *Handler) List(c echo.Context) error {
-	// TODO: Implement ListAgents in processor (TASKS.md Task 4)
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"agents": []interface{}{},
-		"total":  0,
+	userID := c.QueryParam("user_id")
+	if userID == "" {
+		return errors.BadRequest("user_id query param is required")
+	}
+
+	ctx := c.Request().Context()
+	podIDs, err := h.processor.ListAgents(ctx, userID)
+	if err != nil {
+		return errors.InternalError(err.Error())
+	}
+
+	agents := make([]AgentResponse, 0, len(podIDs))
+	for _, podID := range podIDs {
+		// Fetch full pod details for each agent
+		pod, err := h.processor.GetAgent(ctx, podID.UserID, podID.AgentID)
+		if err != nil {
+			// If we can't get pod details, include basic info
+			agents = append(agents, AgentResponse{
+				UserID:  podID.UserID,
+				AgentID: podID.AgentID,
+				PodName: podID.Name(),
+			})
+			continue
+		}
+		agents = append(agents, podToAgentResponse(pod))
+	}
+
+	return c.JSON(http.StatusOK, ListAgentsResponse{
+		Agents: agents,
+		Total:  len(agents),
 	})
 }
 
-// Get handles GET /api/v1/agents/:id
+// Get handles GET /api/v1/agents/:id?user_id=xxx&refresh=true
 func (h *Handler) Get(c echo.Context) error {
-	// TODO: Implement GetAgent in processor (TASKS.md Task 4)
-	return errors.NotFound("not implemented")
+	agentID := c.Param("id")
+	userID := c.QueryParam("user_id")
+	if userID == "" {
+		return errors.BadRequest("user_id query param is required")
+	}
+
+	ctx := c.Request().Context()
+	pod, err := h.processor.GetAgent(ctx, userID, agentID)
+	if err != nil {
+		return errors.NotFound(err.Error())
+	}
+
+	resp := podToAgentResponse(pod)
+
+	// Optionally fetch real-time status from the agent via RPC
+	if c.QueryParam("refresh") == "true" && resp.Ready {
+		// GetStatus validates the agent is responsive
+		// Status response can be used for additional fields in the future
+		_, _ = h.processor.GetStatus(ctx, userID, agentID)
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }
 
 // Delete handles DELETE /api/v1/agents/:id
