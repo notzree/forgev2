@@ -40,7 +40,7 @@ This document defines the tasks required to enable the platform to communicate w
 | Task 3 | ✅ Complete | Agent Client Factory |
 | Task 4 | ✅ Complete | Processor refactor with K8s-based discovery |
 | Task 5 | ✅ Complete | Handler updates (full implementation) |
-| Task 6 | 🟡 Partial | Cleanup (registry removed, fx wiring needs verification) |
+| Task 6 | ✅ Complete | Cleanup (fx wiring fixed, orphaned code removed) |
 | Task 7 | ❌ Not Started | Integration tests |
 
 ---
@@ -267,30 +267,54 @@ type ListAgentsResponse struct {
 
 ---
 
-## Task 6: Clean Up Deleted/Orphaned Code 🟡 PARTIAL
+## Task 6: Clean Up Deleted/Orphaned Code ✅ COMPLETE
 
-**Status**: Registry references removed. Fx wiring needs verification.
+**Status**: Fully implemented. Fx wiring fixed, orphaned code removed.
 
-### Completed
+### Changes Made
 
-- [x] `agent/module.go` - `NewRegistry` commented out
-- [x] `handler/health.go` - Registry dependency removed
-- [x] `processor/processor.go` - Removed broken registry references
+1. **Created `platform/internal/k8s/module.go`**
+   - New fx module providing `ContainerConfig` and `k8s.Manager`
+   - Wires configuration from `config.Config` into `ManagerOpts`
 
-### Remaining
+2. **Updated `platform/internal/config/config.go`**
+   - Added `KubeConfigPath` field for kubeconfig path
+   - Added `AgentNamespace` field with default value "default"
 
-- [ ] Verify fx wiring is correct:
-  - `processor.Module` should provide `NewProcessor`
-  - `handler.Module` should provide handler
-  - Ensure `k8s.Manager` is provided and injected into Processor
-- [ ] Check if `agent/module.go` should be removed entirely (currently empty)
-- [ ] Check for any remaining orphaned types in agent package
+3. **Deleted `platform/internal/agent/module.go`**
+   - Removed empty/orphaned module that only contained TODO comments
+
+4. **Updated `platform/cmd/server/main.go`**
+   - Replaced `agent.Module` with `k8s.Module`
+   - Updated imports accordingly
+
+5. **Cleaned up `platform/internal/handler/health.go`**
+   - Removed TODO comment referencing Task 6
+
+6. **Created `.env.example`**
+   - Added example environment file with all platform and agent configuration options
+
+### Fx Module Structure
+
+```
+config.New() → *config.Config
+     ↓
+k8s.Module
+  ├── NewContainerConfig() → *ContainerConfig
+  └── newManager(cfg, containerCfg) → *Manager
+     ↓
+processor.Module
+  └── NewProcessor(k8sManager) → *Processor
+     ↓
+agenthandler.Module
+  └── NewHandler(processor) → *Handler
+```
 
 ### Verification
 
 ```bash
-go build ./...  # Ensure no compilation errors
-go vet ./...    # Catch issues
+go build ./...  # ✅ Passes
+go vet ./...    # ✅ No issues
 ```
 
 ---
@@ -353,7 +377,7 @@ go vet ./...    # Catch issues
                        │
                        ▼
 ┌──────────────────────────────────────────────────────┐
-│ Task 6: Cleanup (verify fx wiring)                   │  ◄── NEXT
+│ Task 6: Cleanup ✅ COMPLETE                          │
 └──────────────────────┬───────────────────────────────┘
                        │
                        ▼
@@ -362,4 +386,4 @@ go vet ./...    # Catch issues
 └──────────────────────────────────────────────────────┘
 ```
 
-**Note**: Tasks 1-5 are complete. The next step is Task 6 (Cleanup), which involves verifying fx wiring and removing any orphaned code.
+**Note**: Tasks 1-6 are complete. The next step is Task 7 (Integration Tests).

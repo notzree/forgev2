@@ -17,6 +17,10 @@ type Config struct {
 	ShutdownTimeout    time.Duration `env:"SHUTDOWN_TIMEOUT" envDefault:"10s"`
 	ReadTimeout        time.Duration `env:"READ_TIMEOUT" envDefault:"10s"`
 	WriteTimeout       time.Duration `env:"WRITE_TIMEOUT" envDefault:"10s"`
+
+	// Kubernetes configuration
+	KubeConfigPath string `env:"KUBE_CONFIG_PATH"`
+	AgentNamespace string `env:"AGENT_NAMESPACE" envDefault:"default"`
 }
 
 // New creates a new Config from environment variables

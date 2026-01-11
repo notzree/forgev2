@@ -5,11 +5,11 @@ import (
 	"go.uber.org/fx/fxevent"
 	"go.uber.org/zap"
 
-	"github.com/forge/platform/internal/agent"
 	agenthandler "github.com/forge/platform/internal/agent/handler"
 	"github.com/forge/platform/internal/agent/processor"
 	"github.com/forge/platform/internal/config"
 	"github.com/forge/platform/internal/handler"
+	"github.com/forge/platform/internal/k8s"
 	"github.com/forge/platform/internal/logger"
 	"github.com/forge/platform/internal/server"
 )
@@ -21,7 +21,7 @@ func main() {
 
 		// Core modules
 		logger.Module,
-		agent.Module,
+		k8s.Module,
 		processor.Module,
 		agenthandler.Module,
 		server.Module,
