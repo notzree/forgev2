@@ -39,7 +39,7 @@ This document defines the tasks required to enable the platform to communicate w
 | Task 2 | ✅ Complete | WaitForPodReady - Pod readiness waiting |
 | Task 3 | ✅ Complete | Agent Client Factory |
 | Task 4 | ✅ Complete | Processor refactor with K8s-based discovery |
-| Task 5 | 🟡 Stubbed | Handler updates (needs full implementation) |
+| Task 5 | ✅ Complete | Handler updates (full implementation) |
 | Task 6 | 🟡 Partial | Cleanup (registry removed, fx wiring needs verification) |
 | Task 7 | ❌ Not Started | Integration tests |
 
@@ -206,56 +206,64 @@ Added `NewManagerWithClientset` to `k8s/client.go` for testing with fake clients
 
 ---
 
-## Task 5: Update Handler to Match New Processor Interface 🟡 STUBBED
+## Task 5: Update Handler to Match New Processor Interface ✅ COMPLETE
 
 **File**: `platform/internal/agent/handler/handler.go`
 
-**Status**: Currently stubbed with basic structure. Needs full implementation.
+**Status**: Fully implemented with tests in `handler_test.go`.
 
-### Current State (Stubbed)
+### Implementation
 
-- `Create` - Works but response is minimal
-- `List` - Returns empty list (TODO)
-- `Get` - Returns "not implemented" (TODO)
-- `Delete` - Works but requires `user_id` query param
+All handler endpoints have been implemented:
 
-### Changes Required
+```go
+// Response types
+type AgentResponse struct {
+    UserID    string          `json:"user_id"`
+    AgentID   string          `json:"agent_id"`
+    PodName   string          `json:"pod_name"`
+    PodIP     string          `json:"pod_ip,omitempty"`
+    Phase     corev1.PodPhase `json:"phase"`
+    Ready     bool            `json:"ready"`
+    CreatedAt string          `json:"created_at,omitempty"`
+}
 
-1. **Update `AgentResponse`**: Change to match what we can get from K8s:
-   ```go
-   type AgentResponse struct {
-       UserID    string `json:"user_id"`
-       AgentID   string `json:"agent_id"`
-       PodName   string `json:"pod_name"`
-       PodIP     string `json:"pod_ip,omitempty"`
-       Phase     string `json:"phase"`
-       Ready     bool   `json:"ready"`
-       CreatedAt string `json:"created_at,omitempty"`
-   }
-   ```
+type ListAgentsResponse struct {
+    Agents []AgentResponse `json:"agents"`
+    Total  int             `json:"total"`
+}
+```
 
-2. **Implement `Get` handler**:
-   - Parse userID from query param or auth context
-   - Get agentID from path param
-   - Call `processor.GetAgent(ctx, userID, agentID)`
-   - Optionally call `processor.GetStatus()` if `?refresh=true`
+### Endpoints
 
-3. **Implement `List` handler**:
-   - Call `processor.ListAgents(ctx, userID)`
-   - Convert to response format
+1. **POST /api/v1/agents** - Create agent
+   - Request body: `{"owner_id": "user123"}`
+   - Returns full `AgentResponse` with pod details after creation
 
-4. **Enhance `Create` handler**:
-   - Return full `AgentResponse` with pod info
+2. **GET /api/v1/agents?user_id=xxx** - List agents
+   - Returns all agents for the specified user with full pod details
+   - Response: `ListAgentsResponse`
 
-5. **Enhance `Delete` handler**:
-   - Add `graceful` query param support
-   - Pass graceful flag to processor
+3. **GET /api/v1/agents/:id?user_id=xxx&refresh=true** - Get agent
+   - Returns agent details from K8s
+   - Optional `refresh=true` calls RPC `GetStatus` to verify agent responsiveness
 
-### Considerations
+4. **DELETE /api/v1/agents/:id?user_id=xxx&graceful=true** - Delete agent
+   - Optional `graceful=true` sends RPC shutdown before deleting pod
 
-- The handler needs access to userID - this should come from auth middleware eventually
-- For now, require `user_id` as a query parameter or in request body
-- Consider adding a `/api/v1/users/:user_id/agents` route structure for clearer REST semantics
+### Helper Functions
+
+- `podToAgentResponse(pod)` - Converts K8s Pod to AgentResponse
+- `isPodReady(pod)` - Checks if pod is running with all containers ready
+
+### Tests
+
+19 unit tests in `handler_test.go` covering:
+- List: success, empty, missing user_id, filters by user
+- Get: success, not found, missing user_id, pending pod
+- Delete: success, not found, missing user_id, graceful param
+- Create: missing owner_id, invalid JSON
+- Helpers: isPodReady, podToAgentResponse
 
 ---
 
@@ -340,12 +348,12 @@ go vet ./...    # Catch issues
                        │
                        ▼
 ┌──────────────────────────────────────────────────────┐
-│ Task 5: Handler (enhance stubbed implementation)     │  ◄── NEXT
+│ Task 5: Handler ✅ COMPLETE                          │
 └──────────────────────┬───────────────────────────────┘
                        │
                        ▼
 ┌──────────────────────────────────────────────────────┐
-│ Task 6: Cleanup (verify fx wiring)                   │
+│ Task 6: Cleanup (verify fx wiring)                   │  ◄── NEXT
 └──────────────────────┬───────────────────────────────┘
                        │
                        ▼
@@ -354,4 +362,4 @@ go vet ./...    # Catch issues
 └──────────────────────────────────────────────────────┘
 ```
 
-**Note**: Tasks 1, 2, 3, and 4 are complete. The next step is Task 5 (Handler updates), which should use the new processor methods to implement List, Get, and enhance Create/Delete endpoints.
+**Note**: Tasks 1-5 are complete. The next step is Task 6 (Cleanup), which involves verifying fx wiring and removing any orphaned code.
