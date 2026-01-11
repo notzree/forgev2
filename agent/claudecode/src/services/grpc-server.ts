@@ -1,6 +1,7 @@
 import type { ConnectRouter } from "@connectrpc/connect";
 import { fastifyConnectPlugin } from "@connectrpc/connect-fastify";
 import { fastify, type FastifyInstance } from "fastify";
+import http2 from "node:http2";
 import type { AgentConfig } from "../config.ts";
 import { AgentService as AgentServiceProto } from "../gen/agent/v1/agent_pb.ts";
 import { AgentService } from "./agent-service.ts";
@@ -38,15 +39,20 @@ function createRoutes(service: AgentService): (router: ConnectRouter) => void {
 }
 
 /**
- * Creates and configures the Fastify server with Connect-RPC
+ * Creates and configures the Fastify server with Connect-RPC and HTTP/2
  */
 export async function createServer(
   config: AgentConfig,
 ): Promise<FastifyInstance> {
   const service = new AgentService(config);
 
+  // Use HTTP/2 cleartext (h2c) for bidirectional streaming support
   const server = fastify({
     logger: { level: "info" },
+    http2: true,
+    serverFactory: (handler) => {
+      return http2.createServer(handler);
+    },
   });
 
   // Register Connect-RPC plugin

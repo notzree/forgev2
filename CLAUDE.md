@@ -24,28 +24,48 @@ This repository contains only the **Infrastructure** layer:
 ### High-Level Architecture
 
 ```
-                                    ┌─────────────────────────────────────────────────────────┐
-                                    │                    INFRASTRUCTURE                        │
-                                    │                     (this repo)                          │
-┌─────────────────┐                 │  ┌─────────────────┐      gRPC       ┌───────────────┐  │
-│     Product     │  HTTP/WebSocket │  │    Platform     │◄───────────────►│  Agent (Pod)  │  │
-│   (external)    │◄───────────────►│  │   (Go/Echo)     │                 │  (Bun/TS)     │  │
-│                 │                 │  └─────────────────┘                 └───────────────┘  │
-│  - Stores msgs  │   Commands ──►  │         │                                   │           │
-│  - Business     │   ◄── Stream    │         ▼                                   ▼           │
-│    logic        │                 │  ┌─────────────────┐                 ┌───────────────┐  │
-│  - User mgmt    │                 │  │   Kubernetes    │                 │ Claude SDK    │  │
-└─────────────────┘                 │  │  (Pod Mgmt)     │                 │ (AI Runtime)  │  │
+┌─────────────────┐                 ┌─────────────────────────────────────────────────────────┐
+│     Product     │                 │                    INFRASTRUCTURE                        │
+│   (external)    │                 │                     (this repo)                          │
+│                 │   HTTP POST     │  ┌─────────────────┐      gRPC       ┌───────────────┐  │
+│  - Stores msgs  │────────────────>│  │    Platform     │◄───────────────►│  Agent (Pod)  │  │
+│  - Business     │                 │  │   (Go/Echo)     │                 │  (Bun/TS)     │  │
+│    logic        │   Webhook POST  │  └─────────────────┘                 └───────────────┘  │
+│  - User mgmt    │<────────────────│         │                                   │           │
+│  - Webhook      │  (async events) │         ▼                                   ▼           │
+│    endpoint     │                 │  ┌─────────────────┐                 ┌───────────────┐  │
+└─────────────────┘                 │  │   Kubernetes    │                 │ Claude SDK    │  │
+                                    │  │  (Pod Mgmt)     │                 │ (AI Runtime)  │  │
                                     │  └─────────────────┘                 └───────────────┘  │
                                     └─────────────────────────────────────────────────────────┘
 ```
 
 ### Data Flow
 
-1. **Product → Infrastructure**: Send commands (create agent, send message, interrupt, etc.)
-2. **Infrastructure → Agent**: Route commands via gRPC bidirectional stream
-3. **Agent → Infrastructure**: Stream responses (text, tool use, thinking, etc.)
-4. **Infrastructure → Product**: Forward stream via webhook/WebSocket (no persistence)
+1. **Product → Infrastructure**: HTTP POST with command + webhook URL
+2. **Infrastructure → Product**: Immediate 202 Accepted response
+3. **Infrastructure → Agent**: Route command via gRPC bidirectional stream
+4. **Agent → Infrastructure**: Stream responses (text, tool use, thinking, etc.)
+5. **Infrastructure → Product**: Push each event to product's webhook URL (async)
+
+### Webhook-Based Communication
+
+The platform uses **webhooks** (not WebSockets) to deliver agent events to products:
+
+**Why Webhooks?**
+- **Stateless**: No persistent connections to manage, platform scales horizontally
+- **Reliable**: Built-in retry logic, products can replay missed messages
+- **Async-friendly**: Coding agents run long tasks; users disconnect/reconnect naturally
+- **Simple**: Products just need an HTTP endpoint, not WebSocket infrastructure
+
+**How it works:**
+1. Product sends command with `webhook_url` parameter
+2. Platform returns `202 Accepted` immediately
+3. Platform streams events from agent via gRPC
+4. Each event is POSTed to product's webhook URL
+5. Events include `seq` numbers for ordering and `uuid` for idempotency
+
+See [WEBHOOK.md](./WEBHOOK.md) for detailed implementation plan.
 
 ## Directory Structure
 
@@ -208,14 +228,21 @@ The agent converts between Claude SDK types and protobuf messages:
 - Messages have sequence numbers (`seq`) for ordering
 - UUIDs for unique identification
 
-### Stateless Streaming (Infrastructure Pattern)
+### Stateless Webhook Delivery (Infrastructure Pattern)
 
-The platform acts as a stateless router:
+The platform acts as a stateless router with webhook-based delivery:
 
-1. Receives commands from products via HTTP/WebSocket
-2. Routes to appropriate agent pod via gRPC
-3. Streams agent output back to product
-4. **Does NOT persist** any messages - products handle storage
+1. Receives commands from products via HTTP POST (with webhook URL)
+2. Returns `202 Accepted` immediately
+3. Routes command to appropriate agent pod via gRPC
+4. Streams agent output and POSTs each event to product's webhook
+5. **Does NOT persist** any messages - products handle storage
+
+Products are responsible for:
+- Providing a webhook endpoint to receive events
+- Storing messages for history/replay
+- Handling user reconnection (query stored messages)
+- Implementing real-time UI updates (SSE/WebSocket to their users)
 
 ### Pod Lifecycle Management
 

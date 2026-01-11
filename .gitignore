@@ -1,7 +1,11 @@
-# Compiled binaries
-server
-
 # Environment files
 .env
 .env.*
 !.env.example
+
+# OS files
+.DS_Store
+
+# IDE
+.idea/
+.vscode/

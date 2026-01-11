@@ -12,7 +12,8 @@ type ContainerConfig struct {
 	Registry string `env:"CONTAINER_REGISTRY" envDefault:"ghcr.io"`
 
 	// Namespace is the registry namespace/org (e.g., "notzree", "myorg")
-	Namespace string `env:"CONTAINER_NAMESPACE" envDefault:"notzree"`
+	// Leave empty for registries that don't use namespaces (like local k3d registry)
+	Namespace string `env:"CONTAINER_NAMESPACE"`
 
 	// AgentImageName is the name of the agent image
 	AgentImageName string `env:"AGENT_IMAGE_NAME" envDefault:"forge-agent"`
@@ -35,12 +36,18 @@ func NewContainerConfig() (*ContainerConfig, error) {
 }
 
 // AgentImage returns the full image reference for the agent
-// e.g., "ghcr.io/notzree/forge-agent:latest"
+// e.g., "ghcr.io/notzree/forge-agent:latest" or "registry:5111/forge-agent:latest"
 func (c *ContainerConfig) AgentImage() string {
+	if c.Namespace == "" {
+		return fmt.Sprintf("%s/%s:%s", c.Registry, c.AgentImageName, c.AgentImageTag)
+	}
 	return fmt.Sprintf("%s/%s/%s:%s", c.Registry, c.Namespace, c.AgentImageName, c.AgentImageTag)
 }
 
 // AgentImageWithTag returns the agent image with a specific tag override
 func (c *ContainerConfig) AgentImageWithTag(tag string) string {
+	if c.Namespace == "" {
+		return fmt.Sprintf("%s/%s:%s", c.Registry, c.AgentImageName, tag)
+	}
 	return fmt.Sprintf("%s/%s/%s:%s", c.Registry, c.Namespace, c.AgentImageName, tag)
 }

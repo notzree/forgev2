@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -24,7 +25,13 @@ const testNamespace = "test-ns"
 func createTestK8sManager(t *testing.T, objects ...runtime.Object) *k8s.Manager {
 	t.Helper()
 	clientset := fake.NewSimpleClientset(objects...)
-	return k8s.NewManagerWithClientset(clientset, testNamespace, "test-image:latest")
+	return k8s.NewManagerWithClientset(clientset, testNamespace, "test-image:latest", "")
+}
+
+// createTestProcessor creates a processor with a fake K8s manager for testing
+func createTestProcessor(t *testing.T, mgr *k8s.Manager) *Processor {
+	t.Helper()
+	return NewProcessor(mgr, nil, zap.NewNop())
 }
 
 // createReadyPod creates a pod that is in ready state
@@ -105,7 +112,7 @@ func (m *mockAgentService) Shutdown(
 
 func TestListAgents_Empty(t *testing.T) {
 	mgr := createTestK8sManager(t)
-	proc := NewProcessor(mgr)
+	proc := createTestProcessor(t, mgr)
 
 	ctx := context.Background()
 	podIDs, err := proc.ListAgents(ctx, "user1")
@@ -120,7 +127,7 @@ func TestListAgents_Empty(t *testing.T) {
 func TestListAgents_SingleAgent(t *testing.T) {
 	pod := createReadyPod("user1", "agent1")
 	mgr := createTestK8sManager(t, pod)
-	proc := NewProcessor(mgr)
+	proc := createTestProcessor(t, mgr)
 
 	ctx := context.Background()
 	podIDs, err := proc.ListAgents(ctx, "user1")
@@ -140,7 +147,7 @@ func TestListAgents_MultipleAgents(t *testing.T) {
 	pod2 := createReadyPod("user1", "agent2")
 	pod3 := createReadyPod("user2", "agent3") // Different user
 	mgr := createTestK8sManager(t, pod1, pod2, pod3)
-	proc := NewProcessor(mgr)
+	proc := createTestProcessor(t, mgr)
 
 	ctx := context.Background()
 	podIDs, err := proc.ListAgents(ctx, "user1")
@@ -169,7 +176,7 @@ func TestListAgents_MultipleAgents(t *testing.T) {
 func TestGetAgent_Found(t *testing.T) {
 	pod := createReadyPod("user1", "agent1")
 	mgr := createTestK8sManager(t, pod)
-	proc := NewProcessor(mgr)
+	proc := createTestProcessor(t, mgr)
 
 	ctx := context.Background()
 	result, err := proc.GetAgent(ctx, "user1", "agent1")
@@ -186,7 +193,7 @@ func TestGetAgent_Found(t *testing.T) {
 
 func TestGetAgent_NotFound(t *testing.T) {
 	mgr := createTestK8sManager(t)
-	proc := NewProcessor(mgr)
+	proc := createTestProcessor(t, mgr)
 
 	ctx := context.Background()
 	_, err := proc.GetAgent(ctx, "user1", "nonexistent")
@@ -207,7 +214,7 @@ func TestGetStatus_Success(t *testing.T) {
 
 func TestGetStatus_AgentNotFound(t *testing.T) {
 	mgr := createTestK8sManager(t)
-	proc := NewProcessor(mgr)
+	proc := createTestProcessor(t, mgr)
 
 	ctx := context.Background()
 	_, err := proc.GetStatus(ctx, "user1", "nonexistent")
@@ -220,7 +227,7 @@ func TestGetStatus_AgentNotReady(t *testing.T) {
 	// Pod exists but has no IP
 	pod := createPendingPod("user1", "agent1")
 	mgr := createTestK8sManager(t, pod)
-	proc := NewProcessor(mgr)
+	proc := createTestProcessor(t, mgr)
 
 	ctx := context.Background()
 	_, err := proc.GetStatus(ctx, "user1", "agent1")
@@ -234,7 +241,7 @@ func TestGetStatus_AgentNotReady(t *testing.T) {
 func TestDeleteAgent_ForceDelete(t *testing.T) {
 	pod := createReadyPod("user1", "agent1")
 	mgr := createTestK8sManager(t, pod)
-	proc := NewProcessor(mgr)
+	proc := createTestProcessor(t, mgr)
 
 	ctx := context.Background()
 	err := proc.DeleteAgent(ctx, "user1", "agent1", false)
@@ -251,7 +258,7 @@ func TestDeleteAgent_ForceDelete(t *testing.T) {
 
 func TestDeleteAgent_NotFound(t *testing.T) {
 	mgr := createTestK8sManager(t)
-	proc := NewProcessor(mgr)
+	proc := createTestProcessor(t, mgr)
 
 	ctx := context.Background()
 	err := proc.DeleteAgent(ctx, "user1", "nonexistent", false)
@@ -265,7 +272,7 @@ func TestDeleteAgent_GracefulWithUnreachableAgent(t *testing.T) {
 	// Graceful should still succeed (delete happens regardless)
 	pod := createReadyPod("user1", "agent1")
 	mgr := createTestK8sManager(t, pod)
-	proc := NewProcessor(mgr)
+	proc := createTestProcessor(t, mgr)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -292,8 +299,8 @@ func TestCreateAgent_Success(t *testing.T) {
 	fakeWatcher := watch.NewFake()
 	clientset.PrependWatchReactor("pods", k8stesting.DefaultWatchReactor(fakeWatcher, nil))
 
-	mgr := k8s.NewManagerWithClientset(clientset, testNamespace, "test-image:latest")
-	proc := NewProcessor(mgr)
+	mgr := k8s.NewManagerWithClientset(clientset, testNamespace, "test-image:latest", "")
+	proc := createTestProcessor(t, mgr)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -354,8 +361,8 @@ func TestCreateAgent_ContextCancelled(t *testing.T) {
 	fakeWatcher := watch.NewFake()
 	clientset.PrependWatchReactor("pods", k8stesting.DefaultWatchReactor(fakeWatcher, nil))
 
-	mgr := k8s.NewManagerWithClientset(clientset, testNamespace, "test-image:latest")
-	proc := NewProcessor(mgr)
+	mgr := k8s.NewManagerWithClientset(clientset, testNamespace, "test-image:latest", "")
+	proc := createTestProcessor(t, mgr)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
 	defer cancel()
@@ -375,7 +382,7 @@ func TestCreateAgent_ContextCancelled(t *testing.T) {
 
 func TestConnectToAgent_AgentNotFound(t *testing.T) {
 	mgr := createTestK8sManager(t)
-	proc := NewProcessor(mgr)
+	proc := createTestProcessor(t, mgr)
 
 	ctx := context.Background()
 	_, err := proc.ConnectToAgent(ctx, "user1", "nonexistent")
@@ -387,7 +394,7 @@ func TestConnectToAgent_AgentNotFound(t *testing.T) {
 func TestConnectToAgent_AgentNotReady(t *testing.T) {
 	pod := createPendingPod("user1", "agent1")
 	mgr := createTestK8sManager(t, pod)
-	proc := NewProcessor(mgr)
+	proc := createTestProcessor(t, mgr)
 
 	ctx := context.Background()
 	_, err := proc.ConnectToAgent(ctx, "user1", "agent1")
@@ -399,7 +406,7 @@ func TestConnectToAgent_AgentNotReady(t *testing.T) {
 func TestConnectToAgent_ReturnsStream(t *testing.T) {
 	pod := createReadyPod("user1", "agent1")
 	mgr := createTestK8sManager(t, pod)
-	proc := NewProcessor(mgr)
+	proc := createTestProcessor(t, mgr)
 
 	ctx := context.Background()
 	stream, err := proc.ConnectToAgent(ctx, "user1", "agent1")

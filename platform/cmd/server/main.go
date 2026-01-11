@@ -8,10 +8,12 @@ import (
 	agenthandler "github.com/forge/platform/internal/agent/handler"
 	"github.com/forge/platform/internal/agent/processor"
 	"github.com/forge/platform/internal/config"
+	"github.com/forge/platform/internal/db"
 	"github.com/forge/platform/internal/handler"
 	"github.com/forge/platform/internal/k8s"
 	"github.com/forge/platform/internal/logger"
 	"github.com/forge/platform/internal/server"
+	"github.com/forge/platform/internal/webhook"
 )
 
 func main() {
@@ -21,7 +23,9 @@ func main() {
 
 		// Core modules
 		logger.Module,
+		db.Module,
 		k8s.Module,
+		webhook.Module,
 		processor.Module,
 		agenthandler.Module,
 		server.Module,

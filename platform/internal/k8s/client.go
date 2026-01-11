@@ -6,6 +6,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -14,6 +15,9 @@ import (
 const (
 	// DefaultAgentPort is the default port that agent containers listen on for gRPC/ConnectRPC
 	DefaultAgentPort = 8080
+
+	// AgentSecretsName is the name of the Kubernetes secret containing agent credentials
+	AgentSecretsName = "agent-secrets"
 )
 
 // PodID uniquely identifies a pod by user and agent
@@ -38,12 +42,16 @@ type ManagerOpts struct {
 	KubeConfigPath string
 	ContainerCfg   ContainerConfig
 	AgentNamespace string
+	// NodeHost is the host/IP to use for NodePort services (e.g., "localhost", "192.168.1.100")
+	// If empty, falls back to using pod IPs (requires in-cluster access)
+	NodeHost string
 }
 
 type Manager struct {
 	agentNamespace string
 	clientset      kubernetes.Interface
 	agentImage     string
+	nodeHost       string // Host for NodePort access, empty means use pod IPs
 }
 
 func NewManager(opts ManagerOpts) (*Manager, error) {
@@ -59,28 +67,32 @@ func NewManager(opts ManagerOpts) (*Manager, error) {
 	return &Manager{
 		clientset:      clientset,
 		agentNamespace: opts.AgentNamespace,
-		agentImage:     opts.ContainerCfg.AgentImageName,
+		agentImage:     opts.ContainerCfg.AgentImage(),
+		nodeHost:       opts.NodeHost,
 	}, nil
 }
 
 // NewManagerWithClientset creates a Manager with a provided clientset.
 // This is primarily useful for testing with fake clientsets.
-func NewManagerWithClientset(clientset kubernetes.Interface, namespace, agentImage string) *Manager {
+func NewManagerWithClientset(clientset kubernetes.Interface, namespace, agentImage, nodeHost string) *Manager {
 	return &Manager{
 		clientset:      clientset,
 		agentNamespace: namespace,
 		agentImage:     agentImage,
+		nodeHost:       nodeHost,
 	}
 }
 
 func (m *Manager) CreatePod(ctx context.Context, podID PodID) error {
+	podLabels := map[string]string{
+		"user-id":  podID.UserID,
+		"agent-id": podID.AgentID,
+	}
+
 	newPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: podID.Name(),
-			Labels: map[string]string{
-				"user-id":  podID.UserID,
-				"agent-id": podID.AgentID,
-			},
+			Name:   podID.Name(),
+			Labels: podLabels,
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
@@ -90,8 +102,30 @@ func (m *Manager) CreatePod(ctx context.Context, podID PodID) error {
 					Ports: []corev1.ContainerPort{
 						{ContainerPort: DefaultAgentPort},
 					},
+					Env: []corev1.EnvVar{
+						{
+							Name:  "AGENT_ID",
+							Value: podID.AgentID,
+						},
+						{
+							Name:  "PORT",
+							Value: fmt.Sprintf("%d", DefaultAgentPort),
+						},
+						{
+							Name: "ANTHROPIC_API_KEY",
+							ValueFrom: &corev1.EnvVarSource{
+								SecretKeyRef: &corev1.SecretKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: AgentSecretsName,
+									},
+									Key: "ANTHROPIC_API_KEY",
+								},
+							},
+						},
+					},
 				},
 			},
+			RestartPolicy: corev1.RestartPolicyNever,
 		},
 	}
 	_, err := m.clientset.CoreV1().Pods(m.agentNamespace).Create(
@@ -102,6 +136,45 @@ func (m *Manager) CreatePod(ctx context.Context, podID PodID) error {
 	if err != nil {
 		return fmt.Errorf("failed to create pod: %w", err)
 	}
+
+	// Create NodePort service if nodeHost is configured (for local dev access)
+	if m.nodeHost != "" {
+		if err := m.createServiceForPod(ctx, podID, podLabels); err != nil {
+			// Clean up pod if service creation fails
+			_ = m.ClosePod(context.Background(), podID)
+			return fmt.Errorf("failed to create service: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// createServiceForPod creates a NodePort service to expose the agent pod
+func (m *Manager) createServiceForPod(ctx context.Context, podID PodID, podLabels map[string]string) error {
+	svc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   podID.Name(),
+			Labels: podLabels,
+		},
+		Spec: corev1.ServiceSpec{
+			Type:     corev1.ServiceTypeNodePort,
+			Selector: podLabels,
+			Ports: []corev1.ServicePort{
+				{
+					Name:       "grpc",
+					Port:       DefaultAgentPort,
+					TargetPort: intstr.FromInt(DefaultAgentPort),
+					Protocol:   corev1.ProtocolTCP,
+				},
+			},
+		},
+	}
+
+	_, err := m.clientset.CoreV1().Services(m.agentNamespace).Create(ctx, svc, metav1.CreateOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to create service %s: %w", podID.Name(), err)
+	}
+
 	return nil
 }
 
@@ -114,8 +187,15 @@ func (m *Manager) GetPod(ctx context.Context, podID PodID) (*corev1.Pod, error) 
 }
 
 // GetPodAddress returns the ConnectRPC base URL for the given pod.
-// Returns an error if the pod doesn't exist or doesn't have an IP assigned.
+// If nodeHost is configured, returns the NodePort service address.
+// Otherwise, returns the pod IP (requires in-cluster access).
 func (m *Manager) GetPodAddress(ctx context.Context, podID PodID) (string, error) {
+	// If nodeHost is configured, use the NodePort service
+	if m.nodeHost != "" {
+		return m.getNodePortAddress(ctx, podID)
+	}
+
+	// Fall back to pod IP for in-cluster access
 	pod, err := m.GetPod(ctx, podID)
 	if err != nil {
 		return "", err
@@ -126,6 +206,29 @@ func (m *Manager) GetPodAddress(ctx context.Context, podID PodID) (string, error
 	}
 
 	return fmt.Sprintf("http://%s:%d", pod.Status.PodIP, DefaultAgentPort), nil
+}
+
+// getNodePortAddress returns the address using the NodePort service
+func (m *Manager) getNodePortAddress(ctx context.Context, podID PodID) (string, error) {
+	svc, err := m.clientset.CoreV1().Services(m.agentNamespace).Get(ctx, podID.Name(), metav1.GetOptions{})
+	if err != nil {
+		return "", fmt.Errorf("failed to get service %s: %w", podID.Name(), err)
+	}
+
+	// Find the NodePort
+	var nodePort int32
+	for _, port := range svc.Spec.Ports {
+		if port.Name == "grpc" || port.Port == DefaultAgentPort {
+			nodePort = port.NodePort
+			break
+		}
+	}
+
+	if nodePort == 0 {
+		return "", fmt.Errorf("service %s has no NodePort assigned", podID.Name())
+	}
+
+	return fmt.Sprintf("http://%s:%d", m.nodeHost, nodePort), nil
 }
 
 // WaitForPodReady blocks until the pod is in Ready condition or the context is cancelled.
@@ -185,6 +288,12 @@ func (m *Manager) ListPodsForUser(ctx context.Context, userID string) (*corev1.P
 
 func (m *Manager) ClosePod(ctx context.Context, podID PodID) error {
 	podName := podID.Name()
+
+	// Delete the service first if nodeHost is configured
+	if m.nodeHost != "" {
+		// Ignore errors - service might not exist
+		_ = m.clientset.CoreV1().Services(m.agentNamespace).Delete(ctx, podName, metav1.DeleteOptions{})
+	}
 
 	err := m.clientset.CoreV1().Pods(m.agentNamespace).Delete(
 		ctx,

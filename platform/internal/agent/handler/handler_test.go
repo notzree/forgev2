@@ -27,8 +27,8 @@ const testNamespace = "test-ns"
 func createTestProcessor(t *testing.T, objects ...runtime.Object) *processor.Processor {
 	t.Helper()
 	clientset := fake.NewSimpleClientset(objects...)
-	mgr := k8s.NewManagerWithClientset(clientset, testNamespace, "test-image:latest")
-	return processor.NewProcessor(mgr)
+	mgr := k8s.NewManagerWithClientset(clientset, testNamespace, "test-image:latest", "")
+	return processor.NewProcessor(mgr, nil, zap.NewNop())
 }
 
 // createReadyPod creates a pod that is in ready state

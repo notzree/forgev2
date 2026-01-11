@@ -20,9 +20,17 @@ FROM oven/bun:1-slim AS production
 
 WORKDIR /app
 
+# Install required packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    git \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 # Create non-root user for security
 RUN groupadd --system --gid 1001 forge && \
-    useradd --system --uid 1001 --gid forge --shell /bin/false agent
+    useradd --system --uid 1001 --gid forge --shell /bin/bash --create-home agent
 
 # Copy only necessary files from builder
 COPY --from=builder /app/node_modules ./node_modules
@@ -32,8 +40,14 @@ COPY --from=builder /app/src ./src
 # Set ownership
 RUN chown -R agent:forge /app
 
-# Switch to non-root user
+# Switch to non-root user and install Claude Code CLI
 USER agent
+
+# Install Claude Code CLI as the agent user
+RUN curl -fsSL https://claude.ai/install.sh | bash
+
+# Add Claude Code to PATH
+ENV PATH="/home/agent/.claude/local/bin:${PATH}"
 
 # Default port (can be overridden via PORT env var)
 EXPOSE 8080

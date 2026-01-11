@@ -1,19 +1,39 @@
 package agent
 
 import (
+	"context"
+	"crypto/tls"
+	"net"
 	"net/http"
+	"time"
 
 	"github.com/forge/platform/gen/agent/v1/agentv1connect"
+	"golang.org/x/net/http2"
 )
+
+// http2Client is an HTTP client configured for HTTP/2 cleartext (h2c).
+// Required for bidirectional streaming with Connect-RPC.
+var http2Client = &http.Client{
+	Transport: &http2.Transport{
+		// Allow h2c (HTTP/2 without TLS)
+		AllowHTTP: true,
+		// Use a custom DialTLSContext that returns a plain connection
+		DialTLSContext: func(ctx context.Context, network, addr string, _ *tls.Config) (net.Conn, error) {
+			var d net.Dialer
+			return d.DialContext(ctx, network, addr)
+		},
+	},
+	Timeout: 5 * time.Minute,
+}
 
 // NewClient creates a new AgentService client for the given base URL.
 // The baseURL should be in the format "http://<ip>:8080".
 // Clients are stateless and safe to create per-request.
 //
-// Uses the Connect protocol (HTTP/1.1 compatible, human-readable).
+// Uses HTTP/2 cleartext (h2c) for bidirectional streaming support.
 func NewClient(baseURL string) agentv1connect.AgentServiceClient {
 	return agentv1connect.NewAgentServiceClient(
-		http.DefaultClient,
+		http2Client,
 		baseURL,
 	)
 }

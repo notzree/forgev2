@@ -30,6 +30,10 @@ func (h *Handler) Register(e *echo.Echo) {
 	g.GET("", h.List)
 	g.GET("/:id", h.Get)
 	g.DELETE("/:id", h.Delete)
+
+	// Message routes
+	g.POST("/:id/messages", h.SendMessage)
+	g.POST("/:id/interrupt", h.Interrupt)
 }
 
 // CreateAgentRequest is the request body for creating an agent

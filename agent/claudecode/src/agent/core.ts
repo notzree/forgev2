@@ -68,8 +68,23 @@ export class AgentCore {
     };
 
     try {
+      console.log("[AgentCore] Starting query with options:", {
+        cwd: options.cwd,
+        model: options.model,
+        permissionMode: options.permissionMode,
+        allowedTools: options.allowedTools,
+        resume: options.resume,
+      });
+
       this.current_query = query({ prompt: content, options });
+      console.log("[AgentCore] Query created, starting iteration...");
+
       for await (const sdkMessage of this.current_query) {
+        console.log("[AgentCore] Received SDK message:", {
+          type: sdkMessage.type,
+          session_id: sdkMessage.session_id,
+        });
+
         if (!this.session_id) {
           this.session_id = sdkMessage.session_id;
         }
@@ -88,7 +103,14 @@ export class AgentCore {
         protoMessage.seq = this.nextSeq();
         yield protoMessage;
       }
+      console.log("[AgentCore] Query iteration completed");
     } catch (error) {
+      console.error("[AgentCore] Query failed with error:", error);
+      console.error("[AgentCore] Error details:", {
+        name: error instanceof Error ? error.name : "unknown",
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       this.state = AgentState.ERROR;
       throw error;
     } finally {

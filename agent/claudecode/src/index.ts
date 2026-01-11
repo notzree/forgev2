@@ -15,11 +15,11 @@ async function main() {
   const server = await createServer(config);
 
   try {
-    const address = await server.listen({
+    await server.listen({
       port: config.port,
       host: "0.0.0.0",
     });
-    console.log(`Agent gRPC server listening on ${address}`);
+    console.log(`Agent gRPC server listening on 0.0.0.0:${config.port}`);
     console.log(`Health check: http://0.0.0.0:${config.port}/healthz`);
     console.log(`Ready check: http://0.0.0.0:${config.port}/readyz`);
   } catch (err) {

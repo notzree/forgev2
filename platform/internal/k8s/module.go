@@ -18,5 +18,6 @@ func newManager(cfg *config.Config, containerCfg *ContainerConfig) (*Manager, er
 		KubeConfigPath: cfg.KubeConfigPath,
 		ContainerCfg:   *containerCfg,
 		AgentNamespace: cfg.AgentNamespace,
+		NodeHost:       cfg.NodeHost,
 	})
 }

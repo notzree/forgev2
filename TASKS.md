@@ -354,7 +354,6 @@ go vet ./...    # ✅ No issues
 - Use test-specific namespace to avoid conflicts
 - Clean up pods after tests (even on failure)
 - Consider using `testing.Short()` to skip in unit test runs
-
 ---
 
 ## Recommended Task Order
