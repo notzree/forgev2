@@ -7,7 +7,6 @@ import (
 )
 
 // HealthHandler handles health check endpoints
-// TODO: Registry was deleted, update when processor is refactored (see TASKS.md Task 6)
 type HealthHandler struct{}
 
 // NewHealthHandler creates a new health handler
