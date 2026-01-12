@@ -1,388 +1,129 @@
-# Platform ↔ Agent RPC Integration Tasks
+Feature Gap Analysis: OpenCode vs Forge Platform
 
-This document defines the tasks required to enable the platform to communicate with claudecode agents running in Kubernetes via ConnectRPC.
+### What Forge Currently Supports
 
-## Architecture Overview
-
-**Important**: This repository is the **Infrastructure** layer only. It is stateless and acts as a "dumb pipe" between external Products and Agents. See CLAUDE.md for full architecture details.
-
-```
-                                    ┌─────────────────────────────────────────────────────────┐
-                                    │                    INFRASTRUCTURE                        │
-                                    │                     (this repo)                          │
-┌─────────────────┐                 │  ┌─────────────────┐      gRPC       ┌───────────────┐  │
-│     Product     │  HTTP/WebSocket │  │    Platform     │◄───────────────►│  Agent (Pod)  │  │
-│   (external)    │◄───────────────►│  │   (Go/Echo)     │                 │  (Bun/TS)     │  │
-│                 │                 │  └─────────────────┘                 └───────────────┘  │
-│  - Stores msgs  │   Commands ──►  │         │                                   │           │
-│  - Business     │   ◄── Stream    │         ▼                                   ▼           │
-│    logic        │                 │  ┌─────────────────┐                 ┌───────────────┐  │
-│  - User mgmt    │                 │  │   Kubernetes    │                 │ Claude SDK    │  │
-└─────────────────┘                 │  │  (Pod Mgmt)     │                 │ (AI Runtime)  │  │
-                                    │  └─────────────────┘                 └───────────────┘  │
-                                    └─────────────────────────────────────────────────────────┘
-```
-
-**Key Principles:**
-- Infrastructure is **stateless** - does NOT store message history
-- Infrastructure is a **dumb pipe** - routes commands and streams output
-- Products register webhooks/WebSocket to receive agent output streams
-- Kubernetes is the source of truth for agent state (no in-memory registry)
+| Feature | Proto Definition | Platform Handler | Agent Service |
+|---------|------------------|------------------|---------------|
+| Send Message | ✅ `SendMessageRequest` | ✅ `POST /agents/:id/messages` | ✅ `handleSendMessage` |
+| Interrupt | ✅ `InterruptRequest` | ✅ `POST /agents/:id/interrupt` | ✅ `handleInterrupt` |
+| Set Permission Mode | ✅ `SetPermissionModeRequest` | ❌ No HTTP endpoint | ✅ `handleSetPermissionMode` |
+| Set Model | ✅ `SetModelRequest` | ❌ No HTTP endpoint | ✅ `handleSetModel` |
+| Get Status | ✅ `GetStatusRequest` | ❌ No HTTP endpoint | ✅ `getStatus` |
+| Shutdown | ✅ `ShutdownRequest` | ❌ No HTTP endpoint | ✅ `shutdown` |
 
 ---
 
-## Task Status Summary
+### Missing Features (OpenCode Has, Forge Doesn't)
 
-| Task | Status | Description |
-|------|--------|-------------|
-| Task 1 | ✅ Complete | GetPodAddress - Pod address resolution |
-| Task 2 | ✅ Complete | WaitForPodReady - Pod readiness waiting |
-| Task 3 | ✅ Complete | Agent Client Factory |
-| Task 4 | ✅ Complete | Processor refactor with K8s-based discovery |
-| Task 5 | ✅ Complete | Handler updates (full implementation) |
-| Task 6 | ✅ Complete | Cleanup (fx wiring fixed, orphaned code removed) |
-| Task 7 | ❌ Not Started | Integration tests |
+#### **High Priority - Core Message Features**
+
+| Feature | OpenCode API | Description | Impact |
+|---------|--------------|-------------|--------|
+| **File/Image Attachments** | `parts: [{ type: "file", ... }]` | Send files, images with messages | High - Can't attach context |
+| **Agent Selection** | `parts: [{ type: "agent", agent: "..." }]` | Choose which agent processes | High - No agent switching |
+| **Multi-part Messages** | `parts: Part[]` | Send text + files + agents together | High - Limited input |
+
+Our `SendMessageRequest` only has `content: string`. OpenCode's `PromptInput` supports:
+```typescript
+parts: [
+  { type: "text", text: "..." },
+  { type: "file", path: "...", preview: "..." },
+  { type: "agent", agent: "code-reviewer" }
+]
+```
+
+#### **High Priority - Session Management**
+
+| Feature | OpenCode API | Description | Impact |
+|---------|--------------|-------------|--------|
+| **Create Session** | `POST /session` | Create new conversation | High - Can't start fresh |
+| **Delete Session** | `DELETE /session/:id` | Delete conversation | Medium - Cleanup |
+| **List Sessions** | `GET /session` | List all sessions | Medium - History |
+| **Get Session** | `GET /session/:id` | Get session details | Medium - State |
+| **Fork Session** | `POST /session/:id/fork` | Branch conversation | Medium - Experimentation |
+| **Share Session** | `POST /session/:id/share` | Create shareable link | Low - Collaboration |
+
+Currently Forge creates ONE session per agent pod and never exposes session management to products.
+
+#### **High Priority - Message History**
+
+| Feature | OpenCode API | Description | Impact |
+|---------|--------------|-------------|--------|
+| **Get Messages** | `GET /session/:id/message` | Retrieve message history | High - No history retrieval |
+| **Get Single Message** | `GET /session/:id/message/:msgId` | Get specific message | Medium |
+| **Revert Message** | `POST /session/:id/revert` | Undo message effects | Medium - Error recovery |
+| **Unrevert** | `POST /session/:id/unrevert` | Restore reverted | Low |
+
+#### **Medium Priority - Interactive Features**
+
+| Feature | OpenCode API | Description | Impact |
+|---------|--------------|-------------|--------|
+| **Permission Requests** | `GET /permission`, `POST /permission/:id/reply` | Handle tool permission asks | High - Currently auto-approves |
+| **Question Handling** | `GET /question`, `POST /question/:id/reply` | Handle agent questions | Medium |
+| **Session Todos** | `GET /session/:id/todo` | Get task list | Low - Nice to have |
+
+#### **Medium Priority - Session Features**
+
+| Feature | OpenCode API | Description | Impact |
+|---------|--------------|-------------|--------|
+| **Abort Session** | `POST /session/:id/abort` | Cancel ongoing work | High - Same as interrupt? |
+| **Summarize/Compact** | `POST /session/:id/summarize` | Compress context | Medium - Long sessions |
+| **Get Diff** | `GET /session/:id/diff` | File changes | Medium - Code review |
+| **Session Status** | `GET /session/status` | All session states | Medium |
+
+#### **Lower Priority - Configuration**
+
+| Feature | OpenCode API | Description | Impact |
+|---------|--------------|-------------|--------|
+| **Provider Auth** | `POST /auth/:provider` | Set API keys | Medium - Currently env var |
+| **Get/Update Config** | `GET/PATCH /config` | System config | Low |
+| **List Providers** | `GET /provider` | Available AI providers | Low |
+| **List Agents** | `GET /agent` | Available agent types | Low |
+| **List Tools** | `GET /experimental/tool` | Available tools | Low |
+| **MCP Management** | `GET/POST /mcp` | MCP server config | Low |
+
+#### **Lower Priority - File Operations**
+
+| Feature | OpenCode API | Description | Impact |
+|---------|--------------|-------------|--------|
+| **List Files** | `GET /file` | Browse filesystem | Low - Agent does this |
+| **Read File** | `GET /file/content` | Read file content | Low - Agent does this |
+| **Find Text** | `GET /find` | Ripgrep search | Low - Agent does this |
+| **Find Files** | `GET /find/file` | File search | Low - Agent does this |
 
 ---
 
-## Task 1: Add Pod Address Resolution to K8s Manager ✅ COMPLETE
+### Summary: What's Missing for Feature Completeness
 
-**File**: `platform/internal/k8s/client.go`
+#### **Critical Gaps (Blocking Real Usage)**
 
-**Status**: Implemented and tested.
+1. **No file/image attachments** - Products can't send files to analyze
+2. **No session management** - Products can't create/list/manage conversations  
+3. **No message history retrieval** - Products can't fetch past messages
+4. **No permission handling** - Agent auto-approves everything (security risk)
 
-### Implementation
+#### **Important Gaps (Reduced Functionality)**
 
-```go
-// GetPodAddress returns the ConnectRPC base URL for the given pod.
-// Returns an error if the pod doesn't exist or doesn't have an IP assigned.
-func (m *Manager) GetPodAddress(ctx context.Context, podID PodID) (string, error)
-```
+5. **No agent selection** - Can't choose specialized agents (code-reviewer, etc.)
+6. **No multi-part messages** - Can't combine text + files + agent selection
+7. **No session compaction** - Long conversations will hit context limits
+8. **No revert capability** - Can't undo agent mistakes
+9. **No exposed status/model endpoints** - Proto defined but not HTTP exposed
 
-Returns formatted address: `http://<podIP>:8080`
+#### **Nice to Have**
 
----
-
-## Task 2: Add Pod Readiness Waiting to K8s Manager ✅ COMPLETE
-
-**File**: `platform/internal/k8s/client.go`
-
-**Status**: Implemented with tests in `client_test.go`.
-
-### Implementation
-
-```go
-// WaitForPodReady blocks until the pod is in Ready condition or the context is cancelled.
-// Returns the pod with its assigned IP address once ready.
-func (m *Manager) WaitForPodReady(ctx context.Context, podID PodID) (*corev1.Pod, error)
-
-// isPodReady returns true if the pod is running, has an IP, and all containers are ready
-func isPodReady(pod *corev1.Pod) bool
-```
-
-### Key Features
-- Initial check before watching (returns immediately if already ready)
-- Uses cancellable child context for proper cleanup of WatchPod goroutine
-- Handles pod deletion, context cancellation, and watch errors
-- 12 unit tests covering all scenarios
+10. Question handling for interactive prompts
+11. Todo list access
+12. Diff/file change tracking
+13. Session forking for experimentation
+14. Session sharing
 
 ---
 
-## Task 3: Create Agent Client Factory ✅ COMPLETE
-
-**File**: `platform/internal/agent/client.go`
-
-**Status**: Implemented with tests in `client_test.go`.
-
-### Implementation
-
-```go
-package agent
-
-import (
-    "net/http"
-    "github.com/forge/platform/gen/agent/v1/agentv1connect"
-)
-
-// NewClient creates a new AgentService client for the given base URL.
-// The baseURL should be in the format "http://<ip>:8080".
-// Clients are stateless and safe to create per-request.
-// Uses the Connect protocol (HTTP/1.1 compatible, human-readable).
-func NewClient(baseURL string) agentv1connect.AgentServiceClient {
-    return agentv1connect.NewAgentServiceClient(
-        http.DefaultClient,
-        baseURL,
-    )
-}
-
-// NewClientWithHTTPClient creates a new AgentService client with a custom HTTP client.
-// Useful for testing or when custom transport configuration is needed.
-func NewClientWithHTTPClient(baseURL string, httpClient *http.Client) agentv1connect.AgentServiceClient {
-    return agentv1connect.NewAgentServiceClient(
-        httpClient,
-        baseURL,
-    )
-}
-```
-
-### Key Features
-
-- Two factory functions: `NewClient` (simple) and `NewClientWithHTTPClient` (for testing/custom configs)
-- Uses Connect protocol (not gRPC) for HTTP/1.1 compatibility
-- Stateless - clients are cheap to create per-request
-- No struct needed - just simple factory functions
-
-### Tests
-
-- `TestNewClient_ReturnsValidClient` - Basic smoke test
-- `TestNewClient_WithDifferentURLFormats` - URL format variations (port, localhost, DNS name)
-- `TestNewClientWithHTTPClient_UsesProvidedClient` - Custom HTTP client injection
-- `TestNewClient_CanCallGetStatus` - Integration test with mock server
-- `TestNewClient_CanCallShutdown` - Integration test with mock server
-
----
-
-## Task 4: Refactor Processor to Use K8s-Based Discovery ✅ COMPLETE
-
-**File**: `platform/internal/agent/processor/processor.go`
-
-**Status**: Implemented and tested.
-
-### Implementation
-
-All methods have been implemented with full K8s-based discovery and RPC support:
-
-```go
-type Processor struct {
-    k8m *k8s.Manager
-}
-
-// Lifecycle methods
-func (p *Processor) CreateAgent(ctx context.Context, userID string) (*k8s.PodID, error)
-func (p *Processor) DeleteAgent(ctx context.Context, userID, agentID string, graceful bool) error
-
-// Query methods
-func (p *Processor) ListAgents(ctx context.Context, userID string) ([]k8s.PodID, error)
-func (p *Processor) GetAgent(ctx context.Context, userID, agentID string) (*corev1.Pod, error)
-
-// RPC methods
-func (p *Processor) GetStatus(ctx context.Context, userID, agentID string) (*agentv1.GetStatusResponse, error)
-func (p *Processor) ConnectToAgent(ctx context.Context, userID, agentID string) (*connect.BidiStreamForClient[agentv1.AgentCommand, agentv1.AgentEvent], error)
-```
-
-### Key Features
-
-- **CreateAgent**: Creates pod and waits for it to become ready via `WaitForPodReady`. Includes rollback (pod cleanup) if waiting fails.
-- **DeleteAgent**: Supports graceful shutdown via RPC `Shutdown` call before deleting pod. Graceful errors are ignored (agent may be unreachable).
-- **ListAgents**: Lists all agent pods for a user by extracting PodIDs from pod labels.
-- **GetAgent**: Returns full pod details from K8s.
-- **GetStatus**: Gets real-time agent status via RPC call.
-- **ConnectToAgent**: Establishes bidirectional streaming connection to agent.
-
-### Tests
-
-Comprehensive unit tests in `processor_test.go` covering:
-
-- ListAgents: empty list, single agent, multiple agents (filtering by user)
-- GetAgent: found, not found
-- GetStatus: agent not found, agent not ready (no IP)
-- DeleteAgent: force delete, not found, graceful with unreachable agent
-- CreateAgent: success (with watch simulation), context cancellation (with cleanup verification)
-- ConnectToAgent: agent not found, agent not ready, returns stream
-
-### Handler Update
-
-The handler's `Delete` endpoint was updated to support the new `graceful` parameter:
-
-```go
-// DELETE /api/v1/agents/:id?user_id=xxx&graceful=true
-graceful := c.QueryParam("graceful") == "true"
-h.processor.DeleteAgent(ctx, userID, agentID, graceful)
-```
-
-### Helper Added
-
-Added `NewManagerWithClientset` to `k8s/client.go` for testing with fake clientsets.
-
----
-
-## Task 5: Update Handler to Match New Processor Interface ✅ COMPLETE
-
-**File**: `platform/internal/agent/handler/handler.go`
-
-**Status**: Fully implemented with tests in `handler_test.go`.
-
-### Implementation
-
-All handler endpoints have been implemented:
-
-```go
-// Response types
-type AgentResponse struct {
-    UserID    string          `json:"user_id"`
-    AgentID   string          `json:"agent_id"`
-    PodName   string          `json:"pod_name"`
-    PodIP     string          `json:"pod_ip,omitempty"`
-    Phase     corev1.PodPhase `json:"phase"`
-    Ready     bool            `json:"ready"`
-    CreatedAt string          `json:"created_at,omitempty"`
-}
-
-type ListAgentsResponse struct {
-    Agents []AgentResponse `json:"agents"`
-    Total  int             `json:"total"`
-}
-```
-
-### Endpoints
-
-1. **POST /api/v1/agents** - Create agent
-   - Request body: `{"owner_id": "user123"}`
-   - Returns full `AgentResponse` with pod details after creation
-
-2. **GET /api/v1/agents?user_id=xxx** - List agents
-   - Returns all agents for the specified user with full pod details
-   - Response: `ListAgentsResponse`
-
-3. **GET /api/v1/agents/:id?user_id=xxx&refresh=true** - Get agent
-   - Returns agent details from K8s
-   - Optional `refresh=true` calls RPC `GetStatus` to verify agent responsiveness
-
-4. **DELETE /api/v1/agents/:id?user_id=xxx&graceful=true** - Delete agent
-   - Optional `graceful=true` sends RPC shutdown before deleting pod
-
-### Helper Functions
-
-- `podToAgentResponse(pod)` - Converts K8s Pod to AgentResponse
-- `isPodReady(pod)` - Checks if pod is running with all containers ready
-
-### Tests
-
-19 unit tests in `handler_test.go` covering:
-- List: success, empty, missing user_id, filters by user
-- Get: success, not found, missing user_id, pending pod
-- Delete: success, not found, missing user_id, graceful param
-- Create: missing owner_id, invalid JSON
-- Helpers: isPodReady, podToAgentResponse
-
----
-
-## Task 6: Clean Up Deleted/Orphaned Code ✅ COMPLETE
-
-**Status**: Fully implemented. Fx wiring fixed, orphaned code removed.
-
-### Changes Made
-
-1. **Created `platform/internal/k8s/module.go`**
-   - New fx module providing `ContainerConfig` and `k8s.Manager`
-   - Wires configuration from `config.Config` into `ManagerOpts`
-
-2. **Updated `platform/internal/config/config.go`**
-   - Added `KubeConfigPath` field for kubeconfig path
-   - Added `AgentNamespace` field with default value "default"
-
-3. **Deleted `platform/internal/agent/module.go`**
-   - Removed empty/orphaned module that only contained TODO comments
-
-4. **Updated `platform/cmd/server/main.go`**
-   - Replaced `agent.Module` with `k8s.Module`
-   - Updated imports accordingly
-
-5. **Cleaned up `platform/internal/handler/health.go`**
-   - Removed TODO comment referencing Task 6
-
-6. **Created `.env.example`**
-   - Added example environment file with all platform and agent configuration options
-
-### Fx Module Structure
-
-```
-config.New() → *config.Config
-     ↓
-k8s.Module
-  ├── NewContainerConfig() → *ContainerConfig
-  └── newManager(cfg, containerCfg) → *Manager
-     ↓
-processor.Module
-  └── NewProcessor(k8sManager) → *Processor
-     ↓
-agenthandler.Module
-  └── NewHandler(processor) → *Handler
-```
-
-### Verification
-
-```bash
-go build ./...  # ✅ Passes
-go vet ./...    # ✅ No issues
-```
-
----
-
-## Task 7: Add Integration Test for Full Flow ❌ NOT STARTED
-
-**File**: `platform/internal/agent/processor/processor_test.go` (new file)
-
-**Goal**: Test the full flow of creating an agent and communicating with it.
-
-### Test Scenarios
-
-1. **CreateAgent → GetStatus → DeleteAgent**
-   - Create agent for a user
-   - Wait for it to be ready
-   - Call GetStatus and verify response
-   - Delete the agent
-   - Verify pod is gone
-
-2. **CreateAgent → Connect → Send Message → Receive Response**
-   - Create agent
-   - Open bidirectional stream
-   - Send a command
-   - Receive events
-   - Close stream
-
-3. **ListAgents**
-   - Create multiple agents for a user
-   - List and verify all returned
-   - Create agent for different user
-   - List for first user, verify second user's agent not included
-
-### Considerations
-
-- These are integration tests requiring a K8s cluster (use kind/minikube for CI)
-- Need the agent image built and available
-- Use test-specific namespace to avoid conflicts
-- Clean up pods after tests (even on failure)
-- Consider using `testing.Short()` to skip in unit test runs
----
-
-## Recommended Task Order
-
-```
-                    ┌──────────────────────┐
-                    │ Task 3: Client       │
-                    │ Factory ✅ COMPLETE  │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-┌──────────────────────────────────────────────────────┐
-│ Task 4: Processor ✅ COMPLETE                        │
-└──────────────────────┬───────────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────────┐
-│ Task 5: Handler ✅ COMPLETE                          │
-└──────────────────────┬───────────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────────┐
-│ Task 6: Cleanup ✅ COMPLETE                          │
-└──────────────────────┬───────────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────────┐
-│ Task 7: Integration Tests                            │
-└──────────────────────────────────────────────────────┘
-```
-
-**Note**: Tasks 1-6 are complete. The next step is Task 7 (Integration Tests).
+### Recommended Priority Order
+
+1. **File attachments in SendMessage** - Expand proto and agent to support parts
+2. **Session CRUD endpoints** - Expose create/list/get/delete session
+3. **Message history endpoint** - Get messages for a session
+4. **Permission request handling** - Forward permission.asked events, add reply endpoint
+5. **Expose existing proto endpoints** - Add HTTP handlers for SetModel, SetPermissionMode, GetStatus

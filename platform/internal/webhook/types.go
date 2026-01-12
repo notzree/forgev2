@@ -1,6 +1,7 @@
 package webhook
 
 import (
+	"encoding/json"
 	"time"
 )
 
@@ -8,10 +9,12 @@ import (
 type EventType string
 
 const (
-	EventTypeStream  EventType = "agent.stream"
-	EventTypeMessage EventType = "agent.message"
-	EventTypeResult  EventType = "agent.result"
-	EventTypeError   EventType = "agent.error"
+	// EventTypeEvent is for OpenCode events (passed through as raw JSON)
+	EventTypeEvent EventType = "agent.event"
+	// EventTypeError is for errors
+	EventTypeError EventType = "agent.error"
+	// EventTypeComplete is for stream completion
+	EventTypeComplete EventType = "agent.complete"
 )
 
 // Config holds webhook delivery configuration
@@ -20,51 +23,35 @@ type Config struct {
 	Secret string // optional HMAC secret
 }
 
-// Payload represents a webhook payload
+// Payload represents a webhook payload sent to consumers.
+// The Event field contains raw OpenCode event JSON - the platform does not parse it.
 type Payload struct {
-	EventType EventType   `json:"event_type"`
-	AgentID   string      `json:"agent_id"`
-	RequestID string      `json:"request_id"`
-	Seq       int64       `json:"seq"`
-	Timestamp time.Time   `json:"timestamp"`
-	IsFinal   bool        `json:"is_final,omitempty"`
-	Payload   any `json:"payload"`
-}
+	EventType EventType `json:"event_type"`
+	AgentID   string    `json:"agent_id"`
+	RequestID string    `json:"request_id"`
+	SessionID string    `json:"session_id"`
+	Seq       uint64    `json:"seq"`
+	Timestamp time.Time `json:"timestamp"`
+	IsFinal   bool      `json:"is_final,omitempty"`
 
-// StreamPayload is the payload for agent.stream events
-type StreamPayload struct {
-	SessionID    string      `json:"session_id"`
-	ContentBlock any `json:"content_block"`
-}
+	// For agent.event - raw OpenCode event (pass-through)
+	// Consumers should use @opencode-ai/sdk types to parse this
+	Event json.RawMessage `json:"event,omitempty"`
 
-// MessagePayload is the payload for agent.message events
-type MessagePayload struct {
-	UUID          string        `json:"uuid"`
-	SessionID     string        `json:"session_id"`
-	Role          string        `json:"role"`
-	ContentBlocks []any `json:"content_blocks"`
-}
+	// For agent.event - the OpenCode event type (e.g., "message.updated")
+	// Provided for convenience so consumers can filter without parsing Event
+	OpenCodeEventType string `json:"opencode_event_type,omitempty"`
 
-// ResultPayload is the payload for agent.result events
-type ResultPayload struct {
-	SessionID  string       `json:"session_id"`
-	Status     string       `json:"status"`
-	Usage      UsageStats   `json:"usage"`
-	CostUSD    float64      `json:"cost_usd"`
-	DurationMs int64        `json:"duration_ms"`
-}
+	// For agent.error
+	Error *ErrorPayload `json:"error,omitempty"`
 
-// UsageStats contains token usage information
-type UsageStats struct {
-	InputTokens      int64 `json:"input_tokens"`
-	OutputTokens     int64 `json:"output_tokens"`
-	CacheReadTokens  int64 `json:"cache_read_tokens"`
-	CacheWriteTokens int64 `json:"cache_write_tokens"`
+	// For agent.complete
+	Success bool `json:"success,omitempty"`
 }
 
 // ErrorPayload is the payload for agent.error events
 type ErrorPayload struct {
-	ErrorCode   string `json:"error_code"`
+	Code        string `json:"code"`
 	Message     string `json:"message"`
 	Recoverable bool   `json:"recoverable"`
 }

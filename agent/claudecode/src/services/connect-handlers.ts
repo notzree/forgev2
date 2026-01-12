@@ -1,6 +1,11 @@
+/**
+ * Connect-RPC handler definitions for AgentService.
+ * This maps the protobuf service methods to our AgentService implementation.
+ */
+
 import type {
-  AgentCommand,
-  AgentEvent,
+  AgentRequest,
+  AgentResponse,
   GetStatusResponse,
   ShutdownRequest,
   ShutdownResponse,
@@ -8,11 +13,10 @@ import type {
 import type { AgentService } from "./agent-service.ts";
 
 /**
- * Connect-RPC handler definitions for AgentService.
- * This maps the protobuf service methods to our AgentService implementation.
+ * Connect-RPC handler interface
  */
 export interface ConnectHandlers {
-  connect(requests: AsyncIterable<AgentCommand>): AsyncIterable<AgentEvent>;
+  connect(requests: AsyncIterable<AgentRequest>): AsyncIterable<AgentResponse>;
   getStatus(): Promise<GetStatusResponse>;
   shutdown(request: ShutdownRequest): Promise<ShutdownResponse>;
 }
@@ -26,13 +30,13 @@ export function createConnectHandlers(service: AgentService): ConnectHandlers {
      * Bidirectional streaming RPC - main communication channel
      */
     async *connect(
-      requests: AsyncIterable<AgentCommand>,
-    ): AsyncIterable<AgentEvent> {
-      for await (const command of requests) {
-        const requestId = command.requestId;
+      requests: AsyncIterable<AgentRequest>,
+    ): AsyncIterable<AgentResponse> {
+      for await (const request of requests) {
+        const requestId = request.requestId;
 
         try {
-          yield* handleCommand(service, requestId, command);
+          yield* handleCommand(service, requestId, request);
         } catch (error) {
           yield service.handleError(requestId, error);
         }
@@ -56,16 +60,16 @@ export function createConnectHandlers(service: AgentService): ConnectHandlers {
 }
 
 /**
- * Routes a command to the appropriate handler method
+ * Routes a request to the appropriate handler method
  */
 async function* handleCommand(
   service: AgentService,
   requestId: string,
-  command: AgentCommand,
-): AsyncIterable<AgentEvent> {
-  switch (command.command.case) {
+  request: AgentRequest,
+): AsyncIterable<AgentResponse> {
+  switch (request.command.case) {
     case "sendMessage": {
-      const { content } = command.command.value;
+      const { content } = request.command.value;
       yield* service.handleSendMessage(requestId, content);
       break;
     }
@@ -76,13 +80,13 @@ async function* handleCommand(
     }
 
     case "setPermissionMode": {
-      const { mode } = command.command.value;
+      const { mode } = request.command.value;
       yield await service.handleSetPermissionMode(requestId, mode);
       break;
     }
 
     case "setModel": {
-      const { model } = command.command.value;
+      const { model } = request.command.value;
       yield await service.handleSetModel(requestId, model);
       break;
     }
@@ -90,7 +94,7 @@ async function* handleCommand(
     default: {
       yield service.handleUnknownCommand(
         requestId,
-        command.command.case ?? "undefined",
+        request.command.case ?? "undefined",
       );
       break;
     }

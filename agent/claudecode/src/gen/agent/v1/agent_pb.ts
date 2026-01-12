@@ -4,134 +4,100 @@
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Message as Message$1 } from "./messages_pb";
-import { file_agent_v1_messages } from "./messages_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file agent/v1/agent.proto.
  */
 export const file_agent_v1_agent: GenFile = /*@__PURE__*/
-  fileDesc("ChRhZ2VudC92MS9hZ2VudC5wcm90bxIIYWdlbnQudjEihwIKDEFnZW50Q29tbWFuZBISCgpyZXF1ZXN0X2lkGAEgASgJEjQKDHNlbmRfbWVzc2FnZRgKIAEoCzIcLmFnZW50LnYxLlNlbmRNZXNzYWdlQ29tbWFuZEgAEi8KCWludGVycnVwdBgLIAEoCzIaLmFnZW50LnYxLkludGVycnVwdENvbW1hbmRIABJBChNzZXRfcGVybWlzc2lvbl9tb2RlGAwgASgLMiIuYWdlbnQudjEuU2V0UGVybWlzc2lvbk1vZGVDb21tYW5kSAASLgoJc2V0X21vZGVsGA0gASgLMhkuYWdlbnQudjEuU2V0TW9kZWxDb21tYW5kSABCCQoHY29tbWFuZCJQChJTZW5kTWVzc2FnZUNvbW1hbmQSDwoHY29udGVudBgBIAEoCRIpCgthdHRhY2htZW50cxgCIAMoCzIULmFnZW50LnYxLkF0dGFjaG1lbnQiQgoKQXR0YWNobWVudBIQCghmaWxlbmFtZRgBIAEoCRIRCgltaW1lX3R5cGUYAiABKAkSDwoHY29udGVudBgDIAEoDCISChBJbnRlcnJ1cHRDb21tYW5kIigKGFNldFBlcm1pc3Npb25Nb2RlQ29tbWFuZBIMCgRtb2RlGAEgASgJIiAKD1NldE1vZGVsQ29tbWFuZBINCgVtb2RlbBgBIAEoCSKZAQoKQWdlbnRFdmVudBISCgpyZXF1ZXN0X2lkGAEgASgJEiQKB21lc3NhZ2UYCiABKAsyES5hZ2VudC52MS5NZXNzYWdlSAASIQoDYWNrGAsgASgLMhIuYWdlbnQudjEuQWNrRXZlbnRIABIlCgVlcnJvchgMIAEoCzIULmFnZW50LnYxLkVycm9yRXZlbnRIAEIHCgVldmVudCIsCghBY2tFdmVudBIPCgdzdWNjZXNzGAEgASgIEg8KB21lc3NhZ2UYAiABKAkiOgoKRXJyb3JFdmVudBIMCgRjb2RlGAEgASgJEg8KB21lc3NhZ2UYAiABKAkSDQoFZmF0YWwYAyABKAgiEgoQR2V0U3RhdHVzUmVxdWVzdCK1AQoRR2V0U3RhdHVzUmVzcG9uc2USEAoIYWdlbnRfaWQYASABKAkSEgoKc2Vzc2lvbl9pZBgCIAEoCRIjCgVzdGF0ZRgDIAEoDjIULmFnZW50LnYxLkFnZW50U3RhdGUSEgoKbGF0ZXN0X3NlcRgEIAEoAxIVCg1jdXJyZW50X21vZGVsGAUgASgJEhcKD3Blcm1pc3Npb25fbW9kZRgGIAEoCRIRCgl1cHRpbWVfbXMYByABKAMiIwoPU2h1dGRvd25SZXF1ZXN0EhAKCGdyYWNlZnVsGAEgASgIIiMKEFNodXRkb3duUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCpyCgpBZ2VudFN0YXRlEhsKF0FHRU5UX1NUQVRFX1VOU1BFQ0lGSUVEEAASFAoQQUdFTlRfU1RBVEVfSURMRRABEhoKFkFHRU5UX1NUQVRFX1BST0NFU1NJTkcQAhIVChFBR0VOVF9TVEFURV9FUlJPUhADMtQBCgxBZ2VudFNlcnZpY2USOwoHQ29ubmVjdBIWLmFnZW50LnYxLkFnZW50Q29tbWFuZBoULmFnZW50LnYxLkFnZW50RXZlbnQoATABEkQKCUdldFN0YXR1cxIaLmFnZW50LnYxLkdldFN0YXR1c1JlcXVlc3QaGy5hZ2VudC52MS5HZXRTdGF0dXNSZXNwb25zZRJBCghTaHV0ZG93bhIZLmFnZW50LnYxLlNodXRkb3duUmVxdWVzdBoaLmFnZW50LnYxLlNodXRkb3duUmVzcG9uc2VCMFouZ2l0aHViLmNvbS9mb3JnZS9wbGF0Zm9ybS9nZW4vYWdlbnQvdjE7YWdlbnR2MWIGcHJvdG8z", [file_agent_v1_messages]);
+  fileDesc("ChRhZ2VudC92MS9hZ2VudC5wcm90bxIIYWdlbnQudjEihwIKDEFnZW50UmVxdWVzdBISCgpyZXF1ZXN0X2lkGAEgASgJEjQKDHNlbmRfbWVzc2FnZRgCIAEoCzIcLmFnZW50LnYxLlNlbmRNZXNzYWdlUmVxdWVzdEgAEi8KCWludGVycnVwdBgDIAEoCzIaLmFnZW50LnYxLkludGVycnVwdFJlcXVlc3RIABJBChNzZXRfcGVybWlzc2lvbl9tb2RlGAQgASgLMiIuYWdlbnQudjEuU2V0UGVybWlzc2lvbk1vZGVSZXF1ZXN0SAASLgoJc2V0X21vZGVsGAUgASgLMhkuYWdlbnQudjEuU2V0TW9kZWxSZXF1ZXN0SABCCQoHY29tbWFuZCIlChJTZW5kTWVzc2FnZVJlcXVlc3QSDwoHY29udGVudBgBIAEoCSISChBJbnRlcnJ1cHRSZXF1ZXN0IigKGFNldFBlcm1pc3Npb25Nb2RlUmVxdWVzdBIMCgRtb2RlGAEgASgJIiAKD1NldE1vZGVsUmVxdWVzdBINCgVtb2RlbBgBIAEoCSLjAQoNQWdlbnRSZXNwb25zZRISCgpyZXF1ZXN0X2lkGAEgASgJEhIKCnNlc3Npb25faWQYAiABKAkSCwoDc2VxGAMgASgEEhEKCXRpbWVzdGFtcBgEIAEoAxInCgVldmVudBgFIAEoCzIWLmFnZW50LnYxLkV2ZW50UGF5bG9hZEgAEicKBWVycm9yGAYgASgLMhYuYWdlbnQudjEuRXJyb3JQYXlsb2FkSAASLQoIY29tcGxldGUYByABKAsyGS5hZ2VudC52MS5Db21wbGV0ZVBheWxvYWRIAEIJCgdwYXlsb2FkIjYKDEV2ZW50UGF5bG9hZBISCgpldmVudF90eXBlGAEgASgJEhIKCmV2ZW50X2pzb24YAiABKAwiPAoMRXJyb3JQYXlsb2FkEgwKBGNvZGUYASABKAkSDwoHbWVzc2FnZRgCIAEoCRINCgVmYXRhbBgDIAEoCCIiCg9Db21wbGV0ZVBheWxvYWQSDwoHc3VjY2VzcxgBIAEoCCISChBHZXRTdGF0dXNSZXF1ZXN0IrUBChFHZXRTdGF0dXNSZXNwb25zZRIQCghhZ2VudF9pZBgBIAEoCRISCgpzZXNzaW9uX2lkGAIgASgJEiMKBXN0YXRlGAMgASgOMhQuYWdlbnQudjEuQWdlbnRTdGF0ZRISCgpsYXRlc3Rfc2VxGAQgASgDEhUKDWN1cnJlbnRfbW9kZWwYBSABKAkSFwoPcGVybWlzc2lvbl9tb2RlGAYgASgJEhEKCXVwdGltZV9tcxgHIAEoAyIjCg9TaHV0ZG93blJlcXVlc3QSEAoIZ3JhY2VmdWwYASABKAgiIwoQU2h1dGRvd25SZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIKnIKCkFnZW50U3RhdGUSGwoXQUdFTlRfU1RBVEVfVU5TUEVDSUZJRUQQABIUChBBR0VOVF9TVEFURV9JRExFEAESGgoWQUdFTlRfU1RBVEVfUFJPQ0VTU0lORxACEhUKEUFHRU5UX1NUQVRFX0VSUk9SEAMy1wEKDEFnZW50U2VydmljZRI+CgdDb25uZWN0EhYuYWdlbnQudjEuQWdlbnRSZXF1ZXN0GhcuYWdlbnQudjEuQWdlbnRSZXNwb25zZSgBMAESRAoJR2V0U3RhdHVzEhouYWdlbnQudjEuR2V0U3RhdHVzUmVxdWVzdBobLmFnZW50LnYxLkdldFN0YXR1c1Jlc3BvbnNlEkEKCFNodXRkb3duEhkuYWdlbnQudjEuU2h1dGRvd25SZXF1ZXN0GhouYWdlbnQudjEuU2h1dGRvd25SZXNwb25zZUIwWi5naXRodWIuY29tL2ZvcmdlL3BsYXRmb3JtL2dlbi9hZ2VudC92MTthZ2VudHYxYgZwcm90bzM");
 
 /**
- * Commands sent from platform to agent
+ * Request from platform to agent
  *
- * @generated from message agent.v1.AgentCommand
+ * @generated from message agent.v1.AgentRequest
  */
-export type AgentCommand = Message<"agent.v1.AgentCommand"> & {
+export type AgentRequest = Message<"agent.v1.AgentRequest"> & {
   /**
    * @generated from field: string request_id = 1;
    */
   requestId: string;
 
   /**
-   * @generated from oneof agent.v1.AgentCommand.command
+   * @generated from oneof agent.v1.AgentRequest.command
    */
   command: {
     /**
-     * @generated from field: agent.v1.SendMessageCommand send_message = 10;
+     * @generated from field: agent.v1.SendMessageRequest send_message = 2;
      */
-    value: SendMessageCommand;
+    value: SendMessageRequest;
     case: "sendMessage";
   } | {
     /**
-     * @generated from field: agent.v1.InterruptCommand interrupt = 11;
+     * @generated from field: agent.v1.InterruptRequest interrupt = 3;
      */
-    value: InterruptCommand;
+    value: InterruptRequest;
     case: "interrupt";
   } | {
     /**
-     * @generated from field: agent.v1.SetPermissionModeCommand set_permission_mode = 12;
+     * @generated from field: agent.v1.SetPermissionModeRequest set_permission_mode = 4;
      */
-    value: SetPermissionModeCommand;
+    value: SetPermissionModeRequest;
     case: "setPermissionMode";
   } | {
     /**
-     * @generated from field: agent.v1.SetModelCommand set_model = 13;
+     * @generated from field: agent.v1.SetModelRequest set_model = 5;
      */
-    value: SetModelCommand;
+    value: SetModelRequest;
     case: "setModel";
   } | { case: undefined; value?: undefined };
 };
 
 /**
- * Describes the message agent.v1.AgentCommand.
- * Use `create(AgentCommandSchema)` to create a new message.
+ * Describes the message agent.v1.AgentRequest.
+ * Use `create(AgentRequestSchema)` to create a new message.
  */
-export const AgentCommandSchema: GenMessage<AgentCommand> = /*@__PURE__*/
+export const AgentRequestSchema: GenMessage<AgentRequest> = /*@__PURE__*/
   messageDesc(file_agent_v1_agent, 0);
 
 /**
- * @generated from message agent.v1.SendMessageCommand
+ * Simple message request - just pass the user's prompt
+ *
+ * @generated from message agent.v1.SendMessageRequest
  */
-export type SendMessageCommand = Message<"agent.v1.SendMessageCommand"> & {
+export type SendMessageRequest = Message<"agent.v1.SendMessageRequest"> & {
   /**
    * @generated from field: string content = 1;
    */
   content: string;
-
-  /**
-   * @generated from field: repeated agent.v1.Attachment attachments = 2;
-   */
-  attachments: Attachment[];
 };
 
 /**
- * Describes the message agent.v1.SendMessageCommand.
- * Use `create(SendMessageCommandSchema)` to create a new message.
+ * Describes the message agent.v1.SendMessageRequest.
+ * Use `create(SendMessageRequestSchema)` to create a new message.
  */
-export const SendMessageCommandSchema: GenMessage<SendMessageCommand> = /*@__PURE__*/
+export const SendMessageRequestSchema: GenMessage<SendMessageRequest> = /*@__PURE__*/
   messageDesc(file_agent_v1_agent, 1);
 
 /**
- * TODO (richard): Support object storage instead of passing it through rpc stream
- *
- * @generated from message agent.v1.Attachment
+ * @generated from message agent.v1.InterruptRequest
  */
-export type Attachment = Message<"agent.v1.Attachment"> & {
-  /**
-   * @generated from field: string filename = 1;
-   */
-  filename: string;
-
-  /**
-   * @generated from field: string mime_type = 2;
-   */
-  mimeType: string;
-
-  /**
-   * @generated from field: bytes content = 3;
-   */
-  content: Uint8Array;
+export type InterruptRequest = Message<"agent.v1.InterruptRequest"> & {
 };
 
 /**
- * Describes the message agent.v1.Attachment.
- * Use `create(AttachmentSchema)` to create a new message.
+ * Describes the message agent.v1.InterruptRequest.
+ * Use `create(InterruptRequestSchema)` to create a new message.
  */
-export const AttachmentSchema: GenMessage<Attachment> = /*@__PURE__*/
+export const InterruptRequestSchema: GenMessage<InterruptRequest> = /*@__PURE__*/
   messageDesc(file_agent_v1_agent, 2);
 
 /**
- * @generated from message agent.v1.InterruptCommand
+ * @generated from message agent.v1.SetPermissionModeRequest
  */
-export type InterruptCommand = Message<"agent.v1.InterruptCommand"> & {
-};
-
-/**
- * Describes the message agent.v1.InterruptCommand.
- * Use `create(InterruptCommandSchema)` to create a new message.
- */
-export const InterruptCommandSchema: GenMessage<InterruptCommand> = /*@__PURE__*/
-  messageDesc(file_agent_v1_agent, 3);
-
-/**
- * @generated from message agent.v1.SetPermissionModeCommand
- */
-export type SetPermissionModeCommand = Message<"agent.v1.SetPermissionModeCommand"> & {
+export type SetPermissionModeRequest = Message<"agent.v1.SetPermissionModeRequest"> & {
   /**
-   * "default", "acceptEdits", "bypassPermissions"
+   * OpenCode permission mode
    *
    * @generated from field: string mode = 1;
    */
@@ -139,99 +105,127 @@ export type SetPermissionModeCommand = Message<"agent.v1.SetPermissionModeComman
 };
 
 /**
- * Describes the message agent.v1.SetPermissionModeCommand.
- * Use `create(SetPermissionModeCommandSchema)` to create a new message.
+ * Describes the message agent.v1.SetPermissionModeRequest.
+ * Use `create(SetPermissionModeRequestSchema)` to create a new message.
  */
-export const SetPermissionModeCommandSchema: GenMessage<SetPermissionModeCommand> = /*@__PURE__*/
-  messageDesc(file_agent_v1_agent, 4);
+export const SetPermissionModeRequestSchema: GenMessage<SetPermissionModeRequest> = /*@__PURE__*/
+  messageDesc(file_agent_v1_agent, 3);
 
 /**
- * @generated from message agent.v1.SetModelCommand
+ * @generated from message agent.v1.SetModelRequest
  */
-export type SetModelCommand = Message<"agent.v1.SetModelCommand"> & {
+export type SetModelRequest = Message<"agent.v1.SetModelRequest"> & {
   /**
+   * e.g., "anthropic/claude-sonnet-4"
+   *
    * @generated from field: string model = 1;
    */
   model: string;
 };
 
 /**
- * Describes the message agent.v1.SetModelCommand.
- * Use `create(SetModelCommandSchema)` to create a new message.
+ * Describes the message agent.v1.SetModelRequest.
+ * Use `create(SetModelRequestSchema)` to create a new message.
  */
-export const SetModelCommandSchema: GenMessage<SetModelCommand> = /*@__PURE__*/
-  messageDesc(file_agent_v1_agent, 5);
+export const SetModelRequestSchema: GenMessage<SetModelRequest> = /*@__PURE__*/
+  messageDesc(file_agent_v1_agent, 4);
 
 /**
- * Events sent from agent to platform
+ * Response from agent to platform
  *
- * @generated from message agent.v1.AgentEvent
+ * @generated from message agent.v1.AgentResponse
  */
-export type AgentEvent = Message<"agent.v1.AgentEvent"> & {
+export type AgentResponse = Message<"agent.v1.AgentResponse"> & {
   /**
-   * Correlates to the command that triggered this event
-   *
    * @generated from field: string request_id = 1;
    */
   requestId: string;
 
   /**
-   * @generated from oneof agent.v1.AgentEvent.event
+   * @generated from field: string session_id = 2;
    */
-  event: {
+  sessionId: string;
+
+  /**
+   * @generated from field: uint64 seq = 3;
+   */
+  seq: bigint;
+
+  /**
+   * @generated from field: int64 timestamp = 4;
+   */
+  timestamp: bigint;
+
+  /**
+   * @generated from oneof agent.v1.AgentResponse.payload
+   */
+  payload: {
     /**
-     * @generated from field: agent.v1.Message message = 10;
+     * OpenCode event (JSON passthrough)
+     *
+     * @generated from field: agent.v1.EventPayload event = 5;
      */
-    value: Message$1;
-    case: "message";
+    value: EventPayload;
+    case: "event";
   } | {
     /**
-     * @generated from field: agent.v1.AckEvent ack = 11;
+     * Error occurred
+     *
+     * @generated from field: agent.v1.ErrorPayload error = 6;
      */
-    value: AckEvent;
-    case: "ack";
-  } | {
-    /**
-     * @generated from field: agent.v1.ErrorEvent error = 12;
-     */
-    value: ErrorEvent;
+    value: ErrorPayload;
     case: "error";
+  } | {
+    /**
+     * Stream complete
+     *
+     * @generated from field: agent.v1.CompletePayload complete = 7;
+     */
+    value: CompletePayload;
+    case: "complete";
   } | { case: undefined; value?: undefined };
 };
 
 /**
- * Describes the message agent.v1.AgentEvent.
- * Use `create(AgentEventSchema)` to create a new message.
+ * Describes the message agent.v1.AgentResponse.
+ * Use `create(AgentResponseSchema)` to create a new message.
  */
-export const AgentEventSchema: GenMessage<AgentEvent> = /*@__PURE__*/
-  messageDesc(file_agent_v1_agent, 6);
+export const AgentResponseSchema: GenMessage<AgentResponse> = /*@__PURE__*/
+  messageDesc(file_agent_v1_agent, 5);
 
 /**
- * @generated from message agent.v1.AckEvent
+ * Pass-through OpenCode event as JSON
+ * The platform does not parse this - it forwards directly to webhook consumers
+ *
+ * @generated from message agent.v1.EventPayload
  */
-export type AckEvent = Message<"agent.v1.AckEvent"> & {
+export type EventPayload = Message<"agent.v1.EventPayload"> & {
   /**
-   * @generated from field: bool success = 1;
+   * e.g., "message.updated", "session.status", "file.edited"
+   *
+   * @generated from field: string event_type = 1;
    */
-  success: boolean;
+  eventType: string;
 
   /**
-   * @generated from field: string message = 2;
+   * Raw OpenCode event JSON
+   *
+   * @generated from field: bytes event_json = 2;
    */
-  message: string;
+  eventJson: Uint8Array;
 };
 
 /**
- * Describes the message agent.v1.AckEvent.
- * Use `create(AckEventSchema)` to create a new message.
+ * Describes the message agent.v1.EventPayload.
+ * Use `create(EventPayloadSchema)` to create a new message.
  */
-export const AckEventSchema: GenMessage<AckEvent> = /*@__PURE__*/
-  messageDesc(file_agent_v1_agent, 7);
+export const EventPayloadSchema: GenMessage<EventPayload> = /*@__PURE__*/
+  messageDesc(file_agent_v1_agent, 6);
 
 /**
- * @generated from message agent.v1.ErrorEvent
+ * @generated from message agent.v1.ErrorPayload
  */
-export type ErrorEvent = Message<"agent.v1.ErrorEvent"> & {
+export type ErrorPayload = Message<"agent.v1.ErrorPayload"> & {
   /**
    * @generated from field: string code = 1;
    */
@@ -251,14 +245,31 @@ export type ErrorEvent = Message<"agent.v1.ErrorEvent"> & {
 };
 
 /**
- * Describes the message agent.v1.ErrorEvent.
- * Use `create(ErrorEventSchema)` to create a new message.
+ * Describes the message agent.v1.ErrorPayload.
+ * Use `create(ErrorPayloadSchema)` to create a new message.
  */
-export const ErrorEventSchema: GenMessage<ErrorEvent> = /*@__PURE__*/
+export const ErrorPayloadSchema: GenMessage<ErrorPayload> = /*@__PURE__*/
+  messageDesc(file_agent_v1_agent, 7);
+
+/**
+ * @generated from message agent.v1.CompletePayload
+ */
+export type CompletePayload = Message<"agent.v1.CompletePayload"> & {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success: boolean;
+};
+
+/**
+ * Describes the message agent.v1.CompletePayload.
+ * Use `create(CompletePayloadSchema)` to create a new message.
+ */
+export const CompletePayloadSchema: GenMessage<CompletePayload> = /*@__PURE__*/
   messageDesc(file_agent_v1_agent, 8);
 
 /**
- * GetStatus
+ * GetStatus - unchanged
  *
  * @generated from message agent.v1.GetStatusRequest
  */
@@ -320,14 +331,12 @@ export const GetStatusResponseSchema: GenMessage<GetStatusResponse> = /*@__PURE_
   messageDesc(file_agent_v1_agent, 10);
 
 /**
- * Shutdown
+ * Shutdown - unchanged
  *
  * @generated from message agent.v1.ShutdownRequest
  */
 export type ShutdownRequest = Message<"agent.v1.ShutdownRequest"> & {
   /**
-   * If true, wait for current operation to complete
-   *
    * @generated from field: bool graceful = 1;
    */
   graceful: boolean;
@@ -391,20 +400,21 @@ export const AgentStateSchema: GenEnum<AgentState> = /*@__PURE__*/
 /**
  * AgentService is exposed by each agent container.
  * The platform connects to agents as a client.
+ * The platform acts as a "dumb pipe" - it routes messages without parsing content.
  *
  * @generated from service agent.v1.AgentService
  */
 export const AgentService: GenService<{
   /**
    * Connect establishes a bidirectional stream for real-time communication.
-   * Platform sends commands, agent sends messages back.
+   * Platform sends requests, agent sends responses back.
    *
    * @generated from rpc agent.v1.AgentService.Connect
    */
   connect: {
     methodKind: "bidi_streaming";
-    input: typeof AgentCommandSchema;
-    output: typeof AgentEventSchema;
+    input: typeof AgentRequestSchema;
+    output: typeof AgentResponseSchema;
   },
   /**
    * GetStatus returns the current agent status (unary RPC for simple queries).

@@ -1,13 +1,17 @@
+/**
+ * Agent configuration - OpenCode only.
+ */
+
 export interface AgentConfig {
   agentId: string;
   port: number;
   cwd: string;
-  model?: string;
+  // Model settings
+  model: string;
   permissionMode: "default" | "acceptEdits" | "bypassPermissions";
-  allowedTools: string[];
-  tursoUrl?: string;
-  tursoToken?: string;
-  anthropicApiKey?: string;
+  // OpenCode settings
+  opencodeBaseUrl: string;
+  opencodeApiKey?: string;
 }
 
 export function loadConfig(): AgentConfig {
@@ -20,22 +24,11 @@ export function loadConfig(): AgentConfig {
     agentId,
     port: parseInt(process.env.PORT || "8080", 10),
     cwd: process.env.AGENT_CWD || process.cwd(),
-    model: process.env.CLAUDE_MODEL || "claude-sonnet-4-20250514",
+    model: process.env.AGENT_MODEL || "opencode/claude-sonnet-4",
     permissionMode:
       (process.env.PERMISSION_MODE as AgentConfig["permissionMode"]) ||
       "acceptEdits",
-    allowedTools: process.env.ALLOWED_TOOLS?.split(",") || [
-      "Read",
-      "Write",
-      "Edit",
-      "Bash",
-      "Glob",
-      "Grep",
-      "WebSearch",
-      "WebFetch",
-    ],
-    tursoUrl: process.env.TURSO_URL,
-    tursoToken: process.env.TURSO_AUTH_TOKEN,
-    anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+    opencodeBaseUrl: process.env.OPENCODE_BASE_URL || "http://localhost:4096",
+    opencodeApiKey: process.env.OPENCODE_API_KEY,
   };
 }

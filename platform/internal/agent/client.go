@@ -13,6 +13,11 @@ import (
 
 // http2Client is an HTTP client configured for HTTP/2 cleartext (h2c).
 // Required for bidirectional streaming with Connect-RPC.
+//
+// Note: No Timeout is set because http.Client.Timeout applies to the entire
+// request/response cycle including reading the body. For long-running
+// bidirectional streams, this would cause premature disconnects.
+// Use context cancellation for timeout control instead.
 var http2Client = &http.Client{
 	Transport: &http2.Transport{
 		// Allow h2c (HTTP/2 without TLS)
@@ -23,7 +28,7 @@ var http2Client = &http.Client{
 			return d.DialContext(ctx, network, addr)
 		},
 	},
-	Timeout: 5 * time.Minute,
+	Timeout: time.Duration(0),
 }
 
 // NewClient creates a new AgentService client for the given base URL.

@@ -4,14 +4,13 @@ package agent.v1;
 
 option go_package = "github.com/forge/platform/gen/agent/v1;agentv1";
 
-import "agent/v1/messages.proto";
-
 // AgentService is exposed by each agent container.
 // The platform connects to agents as a client.
+// The platform acts as a "dumb pipe" - it routes messages without parsing content.
 service AgentService {
   // Connect establishes a bidirectional stream for real-time communication.
-  // Platform sends commands, agent sends messages back.
-  rpc Connect(stream AgentCommand) returns (stream AgentEvent);
+  // Platform sends requests, agent sends responses back.
+  rpc Connect(stream AgentRequest) returns (stream AgentResponse);
 
   // GetStatus returns the current agent status (unary RPC for simple queries).
   rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
@@ -20,62 +19,65 @@ service AgentService {
   rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
 }
 
-// Commands sent from platform to agent
-message AgentCommand {
+// Request from platform to agent
+message AgentRequest {
   string request_id = 1;
 
   oneof command {
-    SendMessageCommand send_message = 10;
-    InterruptCommand interrupt = 11;
-    SetPermissionModeCommand set_permission_mode = 12;
-    SetModelCommand set_model = 13;
+    SendMessageRequest send_message = 2;
+    InterruptRequest interrupt = 3;
+    SetPermissionModeRequest set_permission_mode = 4;
+    SetModelRequest set_model = 5;
   }
 }
 
-message SendMessageCommand {
+// Simple message request - just pass the user's prompt
+message SendMessageRequest {
   string content = 1;
-  repeated Attachment attachments = 2;
-}
-// TODO (richard): Support object storage instead of passing it through rpc stream
-message Attachment {
-  string filename = 1;
-  string mime_type = 2;
-  bytes content = 3;
 }
 
-message InterruptCommand {}
+message InterruptRequest {}
 
-message SetPermissionModeCommand {
-  string mode = 1; // "default", "acceptEdits", "bypassPermissions"
+message SetPermissionModeRequest {
+  string mode = 1; // OpenCode permission mode
 }
 
-message SetModelCommand {
-  string model = 1;
+message SetModelRequest {
+  string model = 1; // e.g., "anthropic/claude-sonnet-4"
 }
 
-// Events sent from agent to platform
-message AgentEvent {
-  string request_id = 1; // Correlates to the command that triggered this event
+// Response from agent to platform
+message AgentResponse {
+  string request_id = 1;
+  string session_id = 2;
+  uint64 seq = 3;
+  int64 timestamp = 4;
 
-  oneof event {
-    Message message = 10;
-    AckEvent ack = 11;
-    ErrorEvent error = 12;
+  oneof payload {
+    EventPayload event = 5;       // OpenCode event (JSON passthrough)
+    ErrorPayload error = 6;       // Error occurred
+    CompletePayload complete = 7; // Stream complete
   }
 }
 
-message AckEvent {
-  bool success = 1;
-  string message = 2;
+// Pass-through OpenCode event as JSON
+// The platform does not parse this - it forwards directly to webhook consumers
+message EventPayload {
+  string event_type = 1;  // e.g., "message.updated", "session.status", "file.edited"
+  bytes event_json = 2;   // Raw OpenCode event JSON
 }
 
-message ErrorEvent {
+message ErrorPayload {
   string code = 1;
   string message = 2;
   bool fatal = 3; // If true, agent will terminate
 }
 
-// GetStatus
+message CompletePayload {
+  bool success = 1;
+}
+
+// GetStatus - unchanged
 message GetStatusRequest {}
 
 message GetStatusResponse {
@@ -95,9 +97,9 @@ enum AgentState {
   AGENT_STATE_ERROR = 3;
 }
 
-// Shutdown
+// Shutdown - unchanged
 message ShutdownRequest {
-  bool graceful = 1; // If true, wait for current operation to complete
+  bool graceful = 1;
 }
 
 message ShutdownResponse {

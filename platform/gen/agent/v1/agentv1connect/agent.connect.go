@@ -44,8 +44,8 @@ const (
 // AgentServiceClient is a client for the agent.v1.AgentService service.
 type AgentServiceClient interface {
 	// Connect establishes a bidirectional stream for real-time communication.
-	// Platform sends commands, agent sends messages back.
-	Connect(context.Context) *connect.BidiStreamForClient[v1.AgentCommand, v1.AgentEvent]
+	// Platform sends requests, agent sends responses back.
+	Connect(context.Context) *connect.BidiStreamForClient[v1.AgentRequest, v1.AgentResponse]
 	// GetStatus returns the current agent status (unary RPC for simple queries).
 	GetStatus(context.Context, *connect.Request[v1.GetStatusRequest]) (*connect.Response[v1.GetStatusResponse], error)
 	// Shutdown gracefully terminates the agent.
@@ -63,7 +63,7 @@ func NewAgentServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 	baseURL = strings.TrimRight(baseURL, "/")
 	agentServiceMethods := v1.File_agent_v1_agent_proto.Services().ByName("AgentService").Methods()
 	return &agentServiceClient{
-		connect: connect.NewClient[v1.AgentCommand, v1.AgentEvent](
+		connect: connect.NewClient[v1.AgentRequest, v1.AgentResponse](
 			httpClient,
 			baseURL+AgentServiceConnectProcedure,
 			connect.WithSchema(agentServiceMethods.ByName("Connect")),
@@ -86,13 +86,13 @@ func NewAgentServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 
 // agentServiceClient implements AgentServiceClient.
 type agentServiceClient struct {
-	connect   *connect.Client[v1.AgentCommand, v1.AgentEvent]
+	connect   *connect.Client[v1.AgentRequest, v1.AgentResponse]
 	getStatus *connect.Client[v1.GetStatusRequest, v1.GetStatusResponse]
 	shutdown  *connect.Client[v1.ShutdownRequest, v1.ShutdownResponse]
 }
 
 // Connect calls agent.v1.AgentService.Connect.
-func (c *agentServiceClient) Connect(ctx context.Context) *connect.BidiStreamForClient[v1.AgentCommand, v1.AgentEvent] {
+func (c *agentServiceClient) Connect(ctx context.Context) *connect.BidiStreamForClient[v1.AgentRequest, v1.AgentResponse] {
 	return c.connect.CallBidiStream(ctx)
 }
 
@@ -109,8 +109,8 @@ func (c *agentServiceClient) Shutdown(ctx context.Context, req *connect.Request[
 // AgentServiceHandler is an implementation of the agent.v1.AgentService service.
 type AgentServiceHandler interface {
 	// Connect establishes a bidirectional stream for real-time communication.
-	// Platform sends commands, agent sends messages back.
-	Connect(context.Context, *connect.BidiStream[v1.AgentCommand, v1.AgentEvent]) error
+	// Platform sends requests, agent sends responses back.
+	Connect(context.Context, *connect.BidiStream[v1.AgentRequest, v1.AgentResponse]) error
 	// GetStatus returns the current agent status (unary RPC for simple queries).
 	GetStatus(context.Context, *connect.Request[v1.GetStatusRequest]) (*connect.Response[v1.GetStatusResponse], error)
 	// Shutdown gracefully terminates the agent.
@@ -159,7 +159,7 @@ func NewAgentServiceHandler(svc AgentServiceHandler, opts ...connect.HandlerOpti
 // UnimplementedAgentServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedAgentServiceHandler struct{}
 
-func (UnimplementedAgentServiceHandler) Connect(context.Context, *connect.BidiStream[v1.AgentCommand, v1.AgentEvent]) error {
+func (UnimplementedAgentServiceHandler) Connect(context.Context, *connect.BidiStream[v1.AgentRequest, v1.AgentResponse]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("agent.v1.AgentService.Connect is not implemented"))
 }
 

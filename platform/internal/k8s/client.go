@@ -20,6 +20,11 @@ const (
 	AgentSecretsName = "agent-secrets"
 )
 
+// ptr returns a pointer to the given value
+func ptr[T any](v T) *T {
+	return &v
+}
+
 // PodID uniquely identifies a pod by user and agent
 type PodID struct {
 	UserID  string
@@ -112,6 +117,10 @@ func (m *Manager) CreatePod(ctx context.Context, podID PodID) error {
 							Value: fmt.Sprintf("%d", DefaultAgentPort),
 						},
 						{
+							Name:  "AGENT_CWD",
+							Value: "/home/agent/workspace",
+						},
+						{
 							Name: "ANTHROPIC_API_KEY",
 							ValueFrom: &corev1.EnvVarSource{
 								SecretKeyRef: &corev1.SecretKeySelector{
@@ -119,6 +128,18 @@ func (m *Manager) CreatePod(ctx context.Context, podID PodID) error {
 										Name: AgentSecretsName,
 									},
 									Key: "ANTHROPIC_API_KEY",
+								},
+							},
+						},
+						{
+							Name: "OPENCODE_API_KEY",
+							ValueFrom: &corev1.EnvVarSource{
+								SecretKeyRef: &corev1.SecretKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: AgentSecretsName,
+									},
+									Key:      "OPENCODE_API_KEY",
+									Optional: ptr(true),
 								},
 							},
 						},

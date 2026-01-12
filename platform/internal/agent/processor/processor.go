@@ -130,7 +130,7 @@ func (p *Processor) DeleteAgent(ctx context.Context, userID, agentID string, gra
 
 // ConnectToAgent establishes a bidirectional streaming connection to an agent.
 // The caller is responsible for managing the stream lifecycle (closing when done).
-func (p *Processor) ConnectToAgent(ctx context.Context, userID, agentID string) (*connect.BidiStreamForClient[agentv1.AgentCommand, agentv1.AgentEvent], error) {
+func (p *Processor) ConnectToAgent(ctx context.Context, userID, agentID string) (*connect.BidiStreamForClient[agentv1.AgentRequest, agentv1.AgentResponse], error) {
 	podID := k8s.NewPodID(userID, agentID)
 
 	address, err := p.k8m.GetPodAddress(ctx, *podID)
@@ -169,25 +169,32 @@ func (p *Processor) SendMessageWithWebhook(ctx context.Context, userID, agentID,
 		p.webhookDelivery.DeliverAsync(webhookCfg, errPayload)
 		return fmt.Errorf("failed to connect to agent: %w", err)
 	}
-	defer stream.CloseRequest()
 
-	// Send the message command
-	cmd := &agentv1.AgentCommand{
+	// Send the message request
+	req := &agentv1.AgentRequest{
 		RequestId: requestID,
-		Command: &agentv1.AgentCommand_SendMessage{
-			SendMessage: &agentv1.SendMessageCommand{
+		Command: &agentv1.AgentRequest_SendMessage{
+			SendMessage: &agentv1.SendMessageRequest{
 				Content: content,
 			},
 		},
 	}
 
-	if err := stream.Send(cmd); err != nil {
+	if err := stream.Send(req); err != nil {
+		stream.CloseRequest()
 		errPayload := webhook.ErrorToPayload(agentID, requestID, 0, "SEND_FAILED", err.Error(), false)
 		p.webhookDelivery.DeliverAsync(webhookCfg, errPayload)
-		return fmt.Errorf("failed to send message command: %w", err)
+		return fmt.Errorf("failed to send message request: %w", err)
 	}
 
-	// Stream responses to webhook
+	// Close the request side immediately - we only send one request per connection.
+	// This signals to the agent that no more requests are coming, allowing it to
+	// complete its response stream and close cleanly.
+	if err := stream.CloseRequest(); err != nil {
+		p.logger.Warn("failed to close request stream", zap.Error(err))
+	}
+
+	// Stream responses to webhook until completion
 	return p.streamToWebhook(ctx, stream, agentID, requestID, webhookCfg)
 }
 
@@ -210,30 +217,37 @@ func (p *Processor) InterruptWithWebhook(ctx context.Context, userID, agentID, r
 		p.webhookDelivery.DeliverAsync(webhookCfg, errPayload)
 		return fmt.Errorf("failed to connect to agent: %w", err)
 	}
-	defer stream.CloseRequest()
 
-	// Send the interrupt command
-	cmd := &agentv1.AgentCommand{
+	// Send the interrupt request
+	req := &agentv1.AgentRequest{
 		RequestId: requestID,
-		Command: &agentv1.AgentCommand_Interrupt{
-			Interrupt: &agentv1.InterruptCommand{},
+		Command: &agentv1.AgentRequest_Interrupt{
+			Interrupt: &agentv1.InterruptRequest{},
 		},
 	}
 
-	if err := stream.Send(cmd); err != nil {
+	if err := stream.Send(req); err != nil {
+		stream.CloseRequest()
 		errPayload := webhook.ErrorToPayload(agentID, requestID, 0, "SEND_FAILED", err.Error(), false)
 		p.webhookDelivery.DeliverAsync(webhookCfg, errPayload)
-		return fmt.Errorf("failed to send interrupt command: %w", err)
+		return fmt.Errorf("failed to send interrupt request: %w", err)
 	}
 
-	// Stream responses to webhook
+	// Close the request side immediately - we only send one request per connection.
+	if err := stream.CloseRequest(); err != nil {
+		p.logger.Warn("failed to close request stream", zap.Error(err))
+	}
+
+	// Stream responses to webhook until completion
 	return p.streamToWebhook(ctx, stream, agentID, requestID, webhookCfg)
 }
 
-// streamToWebhook reads from the agent gRPC stream and delivers events to the webhook
+// streamToWebhook reads from the agent gRPC stream and delivers events to the webhook.
+// The platform acts as a "dumb pipe" - it does not parse the OpenCode event JSON,
+// just forwards it to the webhook consumer.
 func (p *Processor) streamToWebhook(
 	ctx context.Context,
-	stream *connect.BidiStreamForClient[agentv1.AgentCommand, agentv1.AgentEvent],
+	stream *connect.BidiStreamForClient[agentv1.AgentRequest, agentv1.AgentResponse],
 	agentID, requestID string,
 	webhookCfg webhook.Config,
 ) error {
@@ -271,35 +285,18 @@ func (p *Processor) streamToWebhook(
 			return fmt.Errorf("stream receive error: %w", err)
 		}
 
-		// Get the message from the event
-		msg := resp.GetMessage()
-		if msg == nil {
-			// Handle ack or error events without a message
-			if resp.GetError() != nil {
-				agentErr := resp.GetError()
-				// Recoverable is the opposite of Fatal
-				errPayload := webhook.ErrorToPayload(agentID, requestID, 0, agentErr.GetCode(), agentErr.GetMessage(), !agentErr.GetFatal())
-				if deliveryErr := p.webhookDelivery.Deliver(ctx, webhookCfg, errPayload); deliveryErr != nil {
-					p.logger.Error("failed to deliver error webhook", zap.Error(deliveryErr))
-				}
-				_ = p.webhookDelivery.MarkDeliveryFailed(ctx, requestID)
-				return fmt.Errorf("agent error: %s", agentErr.GetMessage())
-			}
-			continue
-		}
-
-		// Convert to webhook payload
-		payload := webhook.AgentEventToPayload(resp, msg, agentID, requestID)
+		// Convert response to webhook payload (pass-through)
+		payload := webhook.AgentResponseToPayload(resp, agentID, requestID)
 
 		// Update delivery tracking
-		_ = p.webhookDelivery.UpdateDeliverySeq(ctx, requestID, msg.GetSeq(), payload.EventType)
+		_ = p.webhookDelivery.UpdateDeliverySeq(ctx, requestID, int64(resp.GetSeq()), payload.EventType)
 
 		// Deliver to webhook
 		if err := p.webhookDelivery.Deliver(ctx, webhookCfg, payload); err != nil {
 			p.logger.Error("failed to deliver webhook",
 				zap.Error(err),
 				zap.String("request_id", requestID),
-				zap.Int64("seq", msg.GetSeq()),
+				zap.Uint64("seq", resp.GetSeq()),
 			)
 			// Continue processing - don't fail the whole stream on delivery failure
 		}

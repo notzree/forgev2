@@ -144,10 +144,21 @@ check_agent_image() {
 create_agent_secret() {
     log_step "Creating/updating agent secrets in Kubernetes..."
 
-    # Create a secret with the Anthropic API key that agents will use
+    # Build the secret with required and optional API keys
+    local SECRET_ARGS=(
+        --namespace="${AGENT_NAMESPACE}"
+        --from-literal=ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}"
+    )
+
+    # Add OPENCODE_API_KEY if set
+    if [[ -n "${OPENCODE_API_KEY:-}" ]]; then
+        SECRET_ARGS+=(--from-literal=OPENCODE_API_KEY="${OPENCODE_API_KEY}")
+        log_info "Including OPENCODE_API_KEY in agent secrets."
+    fi
+
+    # Create a secret with the API keys that agents will use
     kubectl create secret generic agent-secrets \
-        --namespace="${AGENT_NAMESPACE}" \
-        --from-literal=ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}" \
+        "${SECRET_ARGS[@]}" \
         --dry-run=client -o yaml | kubectl apply -f -
 
     log_info "Agent secrets configured."

@@ -220,10 +220,10 @@ migrate-status:
 # =============================================================================
 
 pg_container := "forge-postgres"
-pg_port := env_var_or_default("POSTGRES_PORT", "5432")
-pg_user := env_var_or_default("POSTGRES_USER", "forge")
-pg_password := env_var_or_default("POSTGRES_PASSWORD", "forge")
-pg_db := env_var_or_default("POSTGRES_DB", "forge_dev")
+pg_port := env("POSTGRES_PORT", "5432")
+pg_user := env("POSTGRES_USER", "forge")
+pg_password := env("POSTGRES_PASSWORD", "forge")
+pg_db := env("POSTGRES_DB", "forge_dev")
 
 # Start local postgres container
 pg-up:

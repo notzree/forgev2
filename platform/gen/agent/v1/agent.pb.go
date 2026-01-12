@@ -73,35 +73,35 @@ func (AgentState) EnumDescriptor() ([]byte, []int) {
 	return file_agent_v1_agent_proto_rawDescGZIP(), []int{0}
 }
 
-// Commands sent from platform to agent
-type AgentCommand struct {
+// Request from platform to agent
+type AgentRequest struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	RequestId string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	// Types that are valid to be assigned to Command:
 	//
-	//	*AgentCommand_SendMessage
-	//	*AgentCommand_Interrupt
-	//	*AgentCommand_SetPermissionMode
-	//	*AgentCommand_SetModel
-	Command       isAgentCommand_Command `protobuf_oneof:"command"`
+	//	*AgentRequest_SendMessage
+	//	*AgentRequest_Interrupt
+	//	*AgentRequest_SetPermissionMode
+	//	*AgentRequest_SetModel
+	Command       isAgentRequest_Command `protobuf_oneof:"command"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AgentCommand) Reset() {
-	*x = AgentCommand{}
+func (x *AgentRequest) Reset() {
+	*x = AgentRequest{}
 	mi := &file_agent_v1_agent_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AgentCommand) String() string {
+func (x *AgentRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AgentCommand) ProtoMessage() {}
+func (*AgentRequest) ProtoMessage() {}
 
-func (x *AgentCommand) ProtoReflect() protoreflect.Message {
+func (x *AgentRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_agent_v1_agent_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -113,111 +113,111 @@ func (x *AgentCommand) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AgentCommand.ProtoReflect.Descriptor instead.
-func (*AgentCommand) Descriptor() ([]byte, []int) {
+// Deprecated: Use AgentRequest.ProtoReflect.Descriptor instead.
+func (*AgentRequest) Descriptor() ([]byte, []int) {
 	return file_agent_v1_agent_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *AgentCommand) GetRequestId() string {
+func (x *AgentRequest) GetRequestId() string {
 	if x != nil {
 		return x.RequestId
 	}
 	return ""
 }
 
-func (x *AgentCommand) GetCommand() isAgentCommand_Command {
+func (x *AgentRequest) GetCommand() isAgentRequest_Command {
 	if x != nil {
 		return x.Command
 	}
 	return nil
 }
 
-func (x *AgentCommand) GetSendMessage() *SendMessageCommand {
+func (x *AgentRequest) GetSendMessage() *SendMessageRequest {
 	if x != nil {
-		if x, ok := x.Command.(*AgentCommand_SendMessage); ok {
+		if x, ok := x.Command.(*AgentRequest_SendMessage); ok {
 			return x.SendMessage
 		}
 	}
 	return nil
 }
 
-func (x *AgentCommand) GetInterrupt() *InterruptCommand {
+func (x *AgentRequest) GetInterrupt() *InterruptRequest {
 	if x != nil {
-		if x, ok := x.Command.(*AgentCommand_Interrupt); ok {
+		if x, ok := x.Command.(*AgentRequest_Interrupt); ok {
 			return x.Interrupt
 		}
 	}
 	return nil
 }
 
-func (x *AgentCommand) GetSetPermissionMode() *SetPermissionModeCommand {
+func (x *AgentRequest) GetSetPermissionMode() *SetPermissionModeRequest {
 	if x != nil {
-		if x, ok := x.Command.(*AgentCommand_SetPermissionMode); ok {
+		if x, ok := x.Command.(*AgentRequest_SetPermissionMode); ok {
 			return x.SetPermissionMode
 		}
 	}
 	return nil
 }
 
-func (x *AgentCommand) GetSetModel() *SetModelCommand {
+func (x *AgentRequest) GetSetModel() *SetModelRequest {
 	if x != nil {
-		if x, ok := x.Command.(*AgentCommand_SetModel); ok {
+		if x, ok := x.Command.(*AgentRequest_SetModel); ok {
 			return x.SetModel
 		}
 	}
 	return nil
 }
 
-type isAgentCommand_Command interface {
-	isAgentCommand_Command()
+type isAgentRequest_Command interface {
+	isAgentRequest_Command()
 }
 
-type AgentCommand_SendMessage struct {
-	SendMessage *SendMessageCommand `protobuf:"bytes,10,opt,name=send_message,json=sendMessage,proto3,oneof"`
+type AgentRequest_SendMessage struct {
+	SendMessage *SendMessageRequest `protobuf:"bytes,2,opt,name=send_message,json=sendMessage,proto3,oneof"`
 }
 
-type AgentCommand_Interrupt struct {
-	Interrupt *InterruptCommand `protobuf:"bytes,11,opt,name=interrupt,proto3,oneof"`
+type AgentRequest_Interrupt struct {
+	Interrupt *InterruptRequest `protobuf:"bytes,3,opt,name=interrupt,proto3,oneof"`
 }
 
-type AgentCommand_SetPermissionMode struct {
-	SetPermissionMode *SetPermissionModeCommand `protobuf:"bytes,12,opt,name=set_permission_mode,json=setPermissionMode,proto3,oneof"`
+type AgentRequest_SetPermissionMode struct {
+	SetPermissionMode *SetPermissionModeRequest `protobuf:"bytes,4,opt,name=set_permission_mode,json=setPermissionMode,proto3,oneof"`
 }
 
-type AgentCommand_SetModel struct {
-	SetModel *SetModelCommand `protobuf:"bytes,13,opt,name=set_model,json=setModel,proto3,oneof"`
+type AgentRequest_SetModel struct {
+	SetModel *SetModelRequest `protobuf:"bytes,5,opt,name=set_model,json=setModel,proto3,oneof"`
 }
 
-func (*AgentCommand_SendMessage) isAgentCommand_Command() {}
+func (*AgentRequest_SendMessage) isAgentRequest_Command() {}
 
-func (*AgentCommand_Interrupt) isAgentCommand_Command() {}
+func (*AgentRequest_Interrupt) isAgentRequest_Command() {}
 
-func (*AgentCommand_SetPermissionMode) isAgentCommand_Command() {}
+func (*AgentRequest_SetPermissionMode) isAgentRequest_Command() {}
 
-func (*AgentCommand_SetModel) isAgentCommand_Command() {}
+func (*AgentRequest_SetModel) isAgentRequest_Command() {}
 
-type SendMessageCommand struct {
+// Simple message request - just pass the user's prompt
+type SendMessageRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Content       string                 `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
-	Attachments   []*Attachment          `protobuf:"bytes,2,rep,name=attachments,proto3" json:"attachments,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SendMessageCommand) Reset() {
-	*x = SendMessageCommand{}
+func (x *SendMessageRequest) Reset() {
+	*x = SendMessageRequest{}
 	mi := &file_agent_v1_agent_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SendMessageCommand) String() string {
+func (x *SendMessageRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SendMessageCommand) ProtoMessage() {}
+func (*SendMessageRequest) ProtoMessage() {}
 
-func (x *SendMessageCommand) ProtoReflect() protoreflect.Message {
+func (x *SendMessageRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_agent_v1_agent_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -229,49 +229,38 @@ func (x *SendMessageCommand) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SendMessageCommand.ProtoReflect.Descriptor instead.
-func (*SendMessageCommand) Descriptor() ([]byte, []int) {
+// Deprecated: Use SendMessageRequest.ProtoReflect.Descriptor instead.
+func (*SendMessageRequest) Descriptor() ([]byte, []int) {
 	return file_agent_v1_agent_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *SendMessageCommand) GetContent() string {
+func (x *SendMessageRequest) GetContent() string {
 	if x != nil {
 		return x.Content
 	}
 	return ""
 }
 
-func (x *SendMessageCommand) GetAttachments() []*Attachment {
-	if x != nil {
-		return x.Attachments
-	}
-	return nil
-}
-
-// TODO (richard): Support object storage instead of passing it through rpc stream
-type Attachment struct {
+type InterruptRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filename      string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
-	MimeType      string                 `protobuf:"bytes,2,opt,name=mime_type,json=mimeType,proto3" json:"mime_type,omitempty"`
-	Content       []byte                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Attachment) Reset() {
-	*x = Attachment{}
+func (x *InterruptRequest) Reset() {
+	*x = InterruptRequest{}
 	mi := &file_agent_v1_agent_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Attachment) String() string {
+func (x *InterruptRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Attachment) ProtoMessage() {}
+func (*InterruptRequest) ProtoMessage() {}
 
-func (x *Attachment) ProtoReflect() protoreflect.Message {
+func (x *InterruptRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_agent_v1_agent_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -283,52 +272,32 @@ func (x *Attachment) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Attachment.ProtoReflect.Descriptor instead.
-func (*Attachment) Descriptor() ([]byte, []int) {
+// Deprecated: Use InterruptRequest.ProtoReflect.Descriptor instead.
+func (*InterruptRequest) Descriptor() ([]byte, []int) {
 	return file_agent_v1_agent_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *Attachment) GetFilename() string {
-	if x != nil {
-		return x.Filename
-	}
-	return ""
-}
-
-func (x *Attachment) GetMimeType() string {
-	if x != nil {
-		return x.MimeType
-	}
-	return ""
-}
-
-func (x *Attachment) GetContent() []byte {
-	if x != nil {
-		return x.Content
-	}
-	return nil
-}
-
-type InterruptCommand struct {
+type SetPermissionModeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Mode          string                 `protobuf:"bytes,1,opt,name=mode,proto3" json:"mode,omitempty"` // OpenCode permission mode
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *InterruptCommand) Reset() {
-	*x = InterruptCommand{}
+func (x *SetPermissionModeRequest) Reset() {
+	*x = SetPermissionModeRequest{}
 	mi := &file_agent_v1_agent_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *InterruptCommand) String() string {
+func (x *SetPermissionModeRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*InterruptCommand) ProtoMessage() {}
+func (*SetPermissionModeRequest) ProtoMessage() {}
 
-func (x *InterruptCommand) ProtoReflect() protoreflect.Message {
+func (x *SetPermissionModeRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_agent_v1_agent_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -340,77 +309,40 @@ func (x *InterruptCommand) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use InterruptCommand.ProtoReflect.Descriptor instead.
-func (*InterruptCommand) Descriptor() ([]byte, []int) {
+// Deprecated: Use SetPermissionModeRequest.ProtoReflect.Descriptor instead.
+func (*SetPermissionModeRequest) Descriptor() ([]byte, []int) {
 	return file_agent_v1_agent_proto_rawDescGZIP(), []int{3}
 }
 
-type SetPermissionModeCommand struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Mode          string                 `protobuf:"bytes,1,opt,name=mode,proto3" json:"mode,omitempty"` // "default", "acceptEdits", "bypassPermissions"
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SetPermissionModeCommand) Reset() {
-	*x = SetPermissionModeCommand{}
-	mi := &file_agent_v1_agent_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SetPermissionModeCommand) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SetPermissionModeCommand) ProtoMessage() {}
-
-func (x *SetPermissionModeCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_v1_agent_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SetPermissionModeCommand.ProtoReflect.Descriptor instead.
-func (*SetPermissionModeCommand) Descriptor() ([]byte, []int) {
-	return file_agent_v1_agent_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *SetPermissionModeCommand) GetMode() string {
+func (x *SetPermissionModeRequest) GetMode() string {
 	if x != nil {
 		return x.Mode
 	}
 	return ""
 }
 
-type SetModelCommand struct {
+type SetModelRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Model         string                 `protobuf:"bytes,1,opt,name=model,proto3" json:"model,omitempty"`
+	Model         string                 `protobuf:"bytes,1,opt,name=model,proto3" json:"model,omitempty"` // e.g., "anthropic/claude-sonnet-4"
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SetModelCommand) Reset() {
-	*x = SetModelCommand{}
-	mi := &file_agent_v1_agent_proto_msgTypes[5]
+func (x *SetModelRequest) Reset() {
+	*x = SetModelRequest{}
+	mi := &file_agent_v1_agent_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SetModelCommand) String() string {
+func (x *SetModelRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SetModelCommand) ProtoMessage() {}
+func (*SetModelRequest) ProtoMessage() {}
 
-func (x *SetModelCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_v1_agent_proto_msgTypes[5]
+func (x *SetModelRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_v1_agent_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -421,47 +353,50 @@ func (x *SetModelCommand) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SetModelCommand.ProtoReflect.Descriptor instead.
-func (*SetModelCommand) Descriptor() ([]byte, []int) {
-	return file_agent_v1_agent_proto_rawDescGZIP(), []int{5}
+// Deprecated: Use SetModelRequest.ProtoReflect.Descriptor instead.
+func (*SetModelRequest) Descriptor() ([]byte, []int) {
+	return file_agent_v1_agent_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *SetModelCommand) GetModel() string {
+func (x *SetModelRequest) GetModel() string {
 	if x != nil {
 		return x.Model
 	}
 	return ""
 }
 
-// Events sent from agent to platform
-type AgentEvent struct {
+// Response from agent to platform
+type AgentResponse struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
-	RequestId string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"` // Correlates to the command that triggered this event
-	// Types that are valid to be assigned to Event:
+	RequestId string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	SessionId string                 `protobuf:"bytes,2,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	Seq       uint64                 `protobuf:"varint,3,opt,name=seq,proto3" json:"seq,omitempty"`
+	Timestamp int64                  `protobuf:"varint,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	// Types that are valid to be assigned to Payload:
 	//
-	//	*AgentEvent_Message
-	//	*AgentEvent_Ack
-	//	*AgentEvent_Error
-	Event         isAgentEvent_Event `protobuf_oneof:"event"`
+	//	*AgentResponse_Event
+	//	*AgentResponse_Error
+	//	*AgentResponse_Complete
+	Payload       isAgentResponse_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AgentEvent) Reset() {
-	*x = AgentEvent{}
-	mi := &file_agent_v1_agent_proto_msgTypes[6]
+func (x *AgentResponse) Reset() {
+	*x = AgentResponse{}
+	mi := &file_agent_v1_agent_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AgentEvent) String() string {
+func (x *AgentResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AgentEvent) ProtoMessage() {}
+func (*AgentResponse) ProtoMessage() {}
 
-func (x *AgentEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_v1_agent_proto_msgTypes[6]
+func (x *AgentResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_v1_agent_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -472,97 +407,120 @@ func (x *AgentEvent) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AgentEvent.ProtoReflect.Descriptor instead.
-func (*AgentEvent) Descriptor() ([]byte, []int) {
-	return file_agent_v1_agent_proto_rawDescGZIP(), []int{6}
+// Deprecated: Use AgentResponse.ProtoReflect.Descriptor instead.
+func (*AgentResponse) Descriptor() ([]byte, []int) {
+	return file_agent_v1_agent_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *AgentEvent) GetRequestId() string {
+func (x *AgentResponse) GetRequestId() string {
 	if x != nil {
 		return x.RequestId
 	}
 	return ""
 }
 
-func (x *AgentEvent) GetEvent() isAgentEvent_Event {
+func (x *AgentResponse) GetSessionId() string {
 	if x != nil {
-		return x.Event
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *AgentResponse) GetSeq() uint64 {
+	if x != nil {
+		return x.Seq
+	}
+	return 0
+}
+
+func (x *AgentResponse) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+func (x *AgentResponse) GetPayload() isAgentResponse_Payload {
+	if x != nil {
+		return x.Payload
 	}
 	return nil
 }
 
-func (x *AgentEvent) GetMessage() *Message {
+func (x *AgentResponse) GetEvent() *EventPayload {
 	if x != nil {
-		if x, ok := x.Event.(*AgentEvent_Message); ok {
-			return x.Message
+		if x, ok := x.Payload.(*AgentResponse_Event); ok {
+			return x.Event
 		}
 	}
 	return nil
 }
 
-func (x *AgentEvent) GetAck() *AckEvent {
+func (x *AgentResponse) GetError() *ErrorPayload {
 	if x != nil {
-		if x, ok := x.Event.(*AgentEvent_Ack); ok {
-			return x.Ack
-		}
-	}
-	return nil
-}
-
-func (x *AgentEvent) GetError() *ErrorEvent {
-	if x != nil {
-		if x, ok := x.Event.(*AgentEvent_Error); ok {
+		if x, ok := x.Payload.(*AgentResponse_Error); ok {
 			return x.Error
 		}
 	}
 	return nil
 }
 
-type isAgentEvent_Event interface {
-	isAgentEvent_Event()
+func (x *AgentResponse) GetComplete() *CompletePayload {
+	if x != nil {
+		if x, ok := x.Payload.(*AgentResponse_Complete); ok {
+			return x.Complete
+		}
+	}
+	return nil
 }
 
-type AgentEvent_Message struct {
-	Message *Message `protobuf:"bytes,10,opt,name=message,proto3,oneof"`
+type isAgentResponse_Payload interface {
+	isAgentResponse_Payload()
 }
 
-type AgentEvent_Ack struct {
-	Ack *AckEvent `protobuf:"bytes,11,opt,name=ack,proto3,oneof"`
+type AgentResponse_Event struct {
+	Event *EventPayload `protobuf:"bytes,5,opt,name=event,proto3,oneof"` // OpenCode event (JSON passthrough)
 }
 
-type AgentEvent_Error struct {
-	Error *ErrorEvent `protobuf:"bytes,12,opt,name=error,proto3,oneof"`
+type AgentResponse_Error struct {
+	Error *ErrorPayload `protobuf:"bytes,6,opt,name=error,proto3,oneof"` // Error occurred
 }
 
-func (*AgentEvent_Message) isAgentEvent_Event() {}
+type AgentResponse_Complete struct {
+	Complete *CompletePayload `protobuf:"bytes,7,opt,name=complete,proto3,oneof"` // Stream complete
+}
 
-func (*AgentEvent_Ack) isAgentEvent_Event() {}
+func (*AgentResponse_Event) isAgentResponse_Payload() {}
 
-func (*AgentEvent_Error) isAgentEvent_Event() {}
+func (*AgentResponse_Error) isAgentResponse_Payload() {}
 
-type AckEvent struct {
+func (*AgentResponse_Complete) isAgentResponse_Payload() {}
+
+// Pass-through OpenCode event as JSON
+// The platform does not parse this - it forwards directly to webhook consumers
+type EventPayload struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	EventType     string                 `protobuf:"bytes,1,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"` // e.g., "message.updated", "session.status", "file.edited"
+	EventJson     []byte                 `protobuf:"bytes,2,opt,name=event_json,json=eventJson,proto3" json:"event_json,omitempty"` // Raw OpenCode event JSON
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AckEvent) Reset() {
-	*x = AckEvent{}
-	mi := &file_agent_v1_agent_proto_msgTypes[7]
+func (x *EventPayload) Reset() {
+	*x = EventPayload{}
+	mi := &file_agent_v1_agent_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AckEvent) String() string {
+func (x *EventPayload) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AckEvent) ProtoMessage() {}
+func (*EventPayload) ProtoMessage() {}
 
-func (x *AckEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_v1_agent_proto_msgTypes[7]
+func (x *EventPayload) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_v1_agent_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -573,26 +531,26 @@ func (x *AckEvent) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AckEvent.ProtoReflect.Descriptor instead.
-func (*AckEvent) Descriptor() ([]byte, []int) {
-	return file_agent_v1_agent_proto_rawDescGZIP(), []int{7}
+// Deprecated: Use EventPayload.ProtoReflect.Descriptor instead.
+func (*EventPayload) Descriptor() ([]byte, []int) {
+	return file_agent_v1_agent_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *AckEvent) GetSuccess() bool {
+func (x *EventPayload) GetEventType() string {
 	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-func (x *AckEvent) GetMessage() string {
-	if x != nil {
-		return x.Message
+		return x.EventType
 	}
 	return ""
 }
 
-type ErrorEvent struct {
+func (x *EventPayload) GetEventJson() []byte {
+	if x != nil {
+		return x.EventJson
+	}
+	return nil
+}
+
+type ErrorPayload struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
 	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
@@ -601,20 +559,78 @@ type ErrorEvent struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ErrorEvent) Reset() {
-	*x = ErrorEvent{}
+func (x *ErrorPayload) Reset() {
+	*x = ErrorPayload{}
+	mi := &file_agent_v1_agent_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ErrorPayload) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ErrorPayload) ProtoMessage() {}
+
+func (x *ErrorPayload) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_v1_agent_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ErrorPayload.ProtoReflect.Descriptor instead.
+func (*ErrorPayload) Descriptor() ([]byte, []int) {
+	return file_agent_v1_agent_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ErrorPayload) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *ErrorPayload) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *ErrorPayload) GetFatal() bool {
+	if x != nil {
+		return x.Fatal
+	}
+	return false
+}
+
+type CompletePayload struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CompletePayload) Reset() {
+	*x = CompletePayload{}
 	mi := &file_agent_v1_agent_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ErrorEvent) String() string {
+func (x *CompletePayload) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ErrorEvent) ProtoMessage() {}
+func (*CompletePayload) ProtoMessage() {}
 
-func (x *ErrorEvent) ProtoReflect() protoreflect.Message {
+func (x *CompletePayload) ProtoReflect() protoreflect.Message {
 	mi := &file_agent_v1_agent_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -626,33 +642,19 @@ func (x *ErrorEvent) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ErrorEvent.ProtoReflect.Descriptor instead.
-func (*ErrorEvent) Descriptor() ([]byte, []int) {
+// Deprecated: Use CompletePayload.ProtoReflect.Descriptor instead.
+func (*CompletePayload) Descriptor() ([]byte, []int) {
 	return file_agent_v1_agent_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *ErrorEvent) GetCode() string {
+func (x *CompletePayload) GetSuccess() bool {
 	if x != nil {
-		return x.Code
-	}
-	return ""
-}
-
-func (x *ErrorEvent) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-func (x *ErrorEvent) GetFatal() bool {
-	if x != nil {
-		return x.Fatal
+		return x.Success
 	}
 	return false
 }
 
-// GetStatus
+// GetStatus - unchanged
 type GetStatusRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -781,10 +783,10 @@ func (x *GetStatusResponse) GetUptimeMs() int64 {
 	return 0
 }
 
-// Shutdown
+// Shutdown - unchanged
 type ShutdownRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Graceful      bool                   `protobuf:"varint,1,opt,name=graceful,proto3" json:"graceful,omitempty"` // If true, wait for current operation to complete
+	Graceful      bool                   `protobuf:"varint,1,opt,name=graceful,proto3" json:"graceful,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -874,46 +876,44 @@ var File_agent_v1_agent_proto protoreflect.FileDescriptor
 
 const file_agent_v1_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x14agent/v1/agent.proto\x12\bagent.v1\x1a\x17agent/v1/messages.proto\"\xc7\x02\n" +
-	"\fAgentCommand\x12\x1d\n" +
+	"\x14agent/v1/agent.proto\x12\bagent.v1\"\xc7\x02\n" +
+	"\fAgentRequest\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tR\trequestId\x12A\n" +
-	"\fsend_message\x18\n" +
-	" \x01(\v2\x1c.agent.v1.SendMessageCommandH\x00R\vsendMessage\x12:\n" +
-	"\tinterrupt\x18\v \x01(\v2\x1a.agent.v1.InterruptCommandH\x00R\tinterrupt\x12T\n" +
-	"\x13set_permission_mode\x18\f \x01(\v2\".agent.v1.SetPermissionModeCommandH\x00R\x11setPermissionMode\x128\n" +
-	"\tset_model\x18\r \x01(\v2\x19.agent.v1.SetModelCommandH\x00R\bsetModelB\t\n" +
-	"\acommand\"f\n" +
-	"\x12SendMessageCommand\x12\x18\n" +
-	"\acontent\x18\x01 \x01(\tR\acontent\x126\n" +
-	"\vattachments\x18\x02 \x03(\v2\x14.agent.v1.AttachmentR\vattachments\"_\n" +
-	"\n" +
-	"Attachment\x12\x1a\n" +
-	"\bfilename\x18\x01 \x01(\tR\bfilename\x12\x1b\n" +
-	"\tmime_type\x18\x02 \x01(\tR\bmimeType\x12\x18\n" +
-	"\acontent\x18\x03 \x01(\fR\acontent\"\x12\n" +
-	"\x10InterruptCommand\".\n" +
-	"\x18SetPermissionModeCommand\x12\x12\n" +
+	"\fsend_message\x18\x02 \x01(\v2\x1c.agent.v1.SendMessageRequestH\x00R\vsendMessage\x12:\n" +
+	"\tinterrupt\x18\x03 \x01(\v2\x1a.agent.v1.InterruptRequestH\x00R\tinterrupt\x12T\n" +
+	"\x13set_permission_mode\x18\x04 \x01(\v2\".agent.v1.SetPermissionModeRequestH\x00R\x11setPermissionMode\x128\n" +
+	"\tset_model\x18\x05 \x01(\v2\x19.agent.v1.SetModelRequestH\x00R\bsetModelB\t\n" +
+	"\acommand\".\n" +
+	"\x12SendMessageRequest\x12\x18\n" +
+	"\acontent\x18\x01 \x01(\tR\acontent\"\x12\n" +
+	"\x10InterruptRequest\".\n" +
+	"\x18SetPermissionModeRequest\x12\x12\n" +
 	"\x04mode\x18\x01 \x01(\tR\x04mode\"'\n" +
-	"\x0fSetModelCommand\x12\x14\n" +
-	"\x05model\x18\x01 \x01(\tR\x05model\"\xb9\x01\n" +
+	"\x0fSetModelRequest\x12\x14\n" +
+	"\x05model\x18\x01 \x01(\tR\x05model\"\xa1\x02\n" +
+	"\rAgentResponse\x12\x1d\n" +
 	"\n" +
-	"AgentEvent\x12\x1d\n" +
+	"request_id\x18\x01 \x01(\tR\trequestId\x12\x1d\n" +
 	"\n" +
-	"request_id\x18\x01 \x01(\tR\trequestId\x12-\n" +
-	"\amessage\x18\n" +
-	" \x01(\v2\x11.agent.v1.MessageH\x00R\amessage\x12&\n" +
-	"\x03ack\x18\v \x01(\v2\x12.agent.v1.AckEventH\x00R\x03ack\x12,\n" +
-	"\x05error\x18\f \x01(\v2\x14.agent.v1.ErrorEventH\x00R\x05errorB\a\n" +
-	"\x05event\">\n" +
-	"\bAckEvent\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"P\n" +
+	"session_id\x18\x02 \x01(\tR\tsessionId\x12\x10\n" +
+	"\x03seq\x18\x03 \x01(\x04R\x03seq\x12\x1c\n" +
+	"\ttimestamp\x18\x04 \x01(\x03R\ttimestamp\x12.\n" +
+	"\x05event\x18\x05 \x01(\v2\x16.agent.v1.EventPayloadH\x00R\x05event\x12.\n" +
+	"\x05error\x18\x06 \x01(\v2\x16.agent.v1.ErrorPayloadH\x00R\x05error\x127\n" +
+	"\bcomplete\x18\a \x01(\v2\x19.agent.v1.CompletePayloadH\x00R\bcompleteB\t\n" +
+	"\apayload\"L\n" +
+	"\fEventPayload\x12\x1d\n" +
 	"\n" +
-	"ErrorEvent\x12\x12\n" +
+	"event_type\x18\x01 \x01(\tR\teventType\x12\x1d\n" +
+	"\n" +
+	"event_json\x18\x02 \x01(\fR\teventJson\"R\n" +
+	"\fErrorPayload\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x14\n" +
-	"\x05fatal\x18\x03 \x01(\bR\x05fatal\"\x12\n" +
+	"\x05fatal\x18\x03 \x01(\bR\x05fatal\"+\n" +
+	"\x0fCompletePayload\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x12\n" +
 	"\x10GetStatusRequest\"\x83\x02\n" +
 	"\x11GetStatusResponse\x12\x19\n" +
 	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12\x1d\n" +
@@ -934,9 +934,9 @@ const file_agent_v1_agent_proto_rawDesc = "" +
 	"\x17AGENT_STATE_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10AGENT_STATE_IDLE\x10\x01\x12\x1a\n" +
 	"\x16AGENT_STATE_PROCESSING\x10\x02\x12\x15\n" +
-	"\x11AGENT_STATE_ERROR\x10\x032\xd4\x01\n" +
-	"\fAgentService\x12;\n" +
-	"\aConnect\x12\x16.agent.v1.AgentCommand\x1a\x14.agent.v1.AgentEvent(\x010\x01\x12D\n" +
+	"\x11AGENT_STATE_ERROR\x10\x032\xd7\x01\n" +
+	"\fAgentService\x12>\n" +
+	"\aConnect\x12\x16.agent.v1.AgentRequest\x1a\x17.agent.v1.AgentResponse(\x010\x01\x12D\n" +
 	"\tGetStatus\x12\x1a.agent.v1.GetStatusRequest\x1a\x1b.agent.v1.GetStatusResponse\x12A\n" +
 	"\bShutdown\x12\x19.agent.v1.ShutdownRequest\x1a\x1a.agent.v1.ShutdownResponseB0Z.github.com/forge/platform/gen/agent/v1;agentv1b\x06proto3"
 
@@ -956,42 +956,40 @@ var file_agent_v1_agent_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_agent_v1_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_agent_v1_agent_proto_goTypes = []any{
 	(AgentState)(0),                  // 0: agent.v1.AgentState
-	(*AgentCommand)(nil),             // 1: agent.v1.AgentCommand
-	(*SendMessageCommand)(nil),       // 2: agent.v1.SendMessageCommand
-	(*Attachment)(nil),               // 3: agent.v1.Attachment
-	(*InterruptCommand)(nil),         // 4: agent.v1.InterruptCommand
-	(*SetPermissionModeCommand)(nil), // 5: agent.v1.SetPermissionModeCommand
-	(*SetModelCommand)(nil),          // 6: agent.v1.SetModelCommand
-	(*AgentEvent)(nil),               // 7: agent.v1.AgentEvent
-	(*AckEvent)(nil),                 // 8: agent.v1.AckEvent
-	(*ErrorEvent)(nil),               // 9: agent.v1.ErrorEvent
+	(*AgentRequest)(nil),             // 1: agent.v1.AgentRequest
+	(*SendMessageRequest)(nil),       // 2: agent.v1.SendMessageRequest
+	(*InterruptRequest)(nil),         // 3: agent.v1.InterruptRequest
+	(*SetPermissionModeRequest)(nil), // 4: agent.v1.SetPermissionModeRequest
+	(*SetModelRequest)(nil),          // 5: agent.v1.SetModelRequest
+	(*AgentResponse)(nil),            // 6: agent.v1.AgentResponse
+	(*EventPayload)(nil),             // 7: agent.v1.EventPayload
+	(*ErrorPayload)(nil),             // 8: agent.v1.ErrorPayload
+	(*CompletePayload)(nil),          // 9: agent.v1.CompletePayload
 	(*GetStatusRequest)(nil),         // 10: agent.v1.GetStatusRequest
 	(*GetStatusResponse)(nil),        // 11: agent.v1.GetStatusResponse
 	(*ShutdownRequest)(nil),          // 12: agent.v1.ShutdownRequest
 	(*ShutdownResponse)(nil),         // 13: agent.v1.ShutdownResponse
-	(*Message)(nil),                  // 14: agent.v1.Message
 }
 var file_agent_v1_agent_proto_depIdxs = []int32{
-	2,  // 0: agent.v1.AgentCommand.send_message:type_name -> agent.v1.SendMessageCommand
-	4,  // 1: agent.v1.AgentCommand.interrupt:type_name -> agent.v1.InterruptCommand
-	5,  // 2: agent.v1.AgentCommand.set_permission_mode:type_name -> agent.v1.SetPermissionModeCommand
-	6,  // 3: agent.v1.AgentCommand.set_model:type_name -> agent.v1.SetModelCommand
-	3,  // 4: agent.v1.SendMessageCommand.attachments:type_name -> agent.v1.Attachment
-	14, // 5: agent.v1.AgentEvent.message:type_name -> agent.v1.Message
-	8,  // 6: agent.v1.AgentEvent.ack:type_name -> agent.v1.AckEvent
-	9,  // 7: agent.v1.AgentEvent.error:type_name -> agent.v1.ErrorEvent
-	0,  // 8: agent.v1.GetStatusResponse.state:type_name -> agent.v1.AgentState
-	1,  // 9: agent.v1.AgentService.Connect:input_type -> agent.v1.AgentCommand
-	10, // 10: agent.v1.AgentService.GetStatus:input_type -> agent.v1.GetStatusRequest
-	12, // 11: agent.v1.AgentService.Shutdown:input_type -> agent.v1.ShutdownRequest
-	7,  // 12: agent.v1.AgentService.Connect:output_type -> agent.v1.AgentEvent
-	11, // 13: agent.v1.AgentService.GetStatus:output_type -> agent.v1.GetStatusResponse
-	13, // 14: agent.v1.AgentService.Shutdown:output_type -> agent.v1.ShutdownResponse
-	12, // [12:15] is the sub-list for method output_type
-	9,  // [9:12] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	2,  // 0: agent.v1.AgentRequest.send_message:type_name -> agent.v1.SendMessageRequest
+	3,  // 1: agent.v1.AgentRequest.interrupt:type_name -> agent.v1.InterruptRequest
+	4,  // 2: agent.v1.AgentRequest.set_permission_mode:type_name -> agent.v1.SetPermissionModeRequest
+	5,  // 3: agent.v1.AgentRequest.set_model:type_name -> agent.v1.SetModelRequest
+	7,  // 4: agent.v1.AgentResponse.event:type_name -> agent.v1.EventPayload
+	8,  // 5: agent.v1.AgentResponse.error:type_name -> agent.v1.ErrorPayload
+	9,  // 6: agent.v1.AgentResponse.complete:type_name -> agent.v1.CompletePayload
+	0,  // 7: agent.v1.GetStatusResponse.state:type_name -> agent.v1.AgentState
+	1,  // 8: agent.v1.AgentService.Connect:input_type -> agent.v1.AgentRequest
+	10, // 9: agent.v1.AgentService.GetStatus:input_type -> agent.v1.GetStatusRequest
+	12, // 10: agent.v1.AgentService.Shutdown:input_type -> agent.v1.ShutdownRequest
+	6,  // 11: agent.v1.AgentService.Connect:output_type -> agent.v1.AgentResponse
+	11, // 12: agent.v1.AgentService.GetStatus:output_type -> agent.v1.GetStatusResponse
+	13, // 13: agent.v1.AgentService.Shutdown:output_type -> agent.v1.ShutdownResponse
+	11, // [11:14] is the sub-list for method output_type
+	8,  // [8:11] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_agent_v1_agent_proto_init() }
@@ -999,17 +997,16 @@ func file_agent_v1_agent_proto_init() {
 	if File_agent_v1_agent_proto != nil {
 		return
 	}
-	file_agent_v1_messages_proto_init()
 	file_agent_v1_agent_proto_msgTypes[0].OneofWrappers = []any{
-		(*AgentCommand_SendMessage)(nil),
-		(*AgentCommand_Interrupt)(nil),
-		(*AgentCommand_SetPermissionMode)(nil),
-		(*AgentCommand_SetModel)(nil),
+		(*AgentRequest_SendMessage)(nil),
+		(*AgentRequest_Interrupt)(nil),
+		(*AgentRequest_SetPermissionMode)(nil),
+		(*AgentRequest_SetModel)(nil),
 	}
-	file_agent_v1_agent_proto_msgTypes[6].OneofWrappers = []any{
-		(*AgentEvent_Message)(nil),
-		(*AgentEvent_Ack)(nil),
-		(*AgentEvent_Error)(nil),
+	file_agent_v1_agent_proto_msgTypes[5].OneofWrappers = []any{
+		(*AgentResponse_Event)(nil),
+		(*AgentResponse_Error)(nil),
+		(*AgentResponse_Complete)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
