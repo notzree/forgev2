@@ -198,7 +198,8 @@ export class AgentService {
         );
       }
 
-      // Send completion
+      // Set state to IDLE before sending completion so webhook reflects correct state
+      this.state = AgentState.IDLE;
       yield this.createCompleteResponse(requestId, sessionId, true);
       console.log("[AgentService] Message processing completed");
     } catch (error) {
@@ -210,8 +211,11 @@ export class AgentService {
         error instanceof Error ? error.message : String(error),
         false,
       );
+      // Set state to IDLE before sending completion so webhook reflects correct state
+      this.state = AgentState.IDLE;
       yield this.createCompleteResponse(requestId, sessionId, false);
     } finally {
+      // Ensure state is IDLE even if an error occurred during completion
       this.state = AgentState.IDLE;
       this.abortController = null;
     }
@@ -350,6 +354,7 @@ export class AgentService {
       sessionId,
       seq: this.nextSeq(),
       timestamp: BigInt(Date.now()),
+      state: this.state,
       payload: {
         case: "event",
         value: create(EventPayloadSchema, {
@@ -372,6 +377,7 @@ export class AgentService {
       sessionId,
       seq: this.nextSeq(),
       timestamp: BigInt(Date.now()),
+      state: this.state,
       payload: {
         case: "error",
         value: create(ErrorPayloadSchema, { code, message, fatal }),
@@ -389,6 +395,7 @@ export class AgentService {
       sessionId,
       seq: this.nextSeq(),
       timestamp: BigInt(Date.now()),
+      state: this.state,
       payload: {
         case: "complete",
         value: create(CompletePayloadSchema, { success }),

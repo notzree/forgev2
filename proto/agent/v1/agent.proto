@@ -58,6 +58,9 @@ message AgentResponse {
     ErrorPayload error = 6;       // Error occurred
     CompletePayload complete = 7; // Stream complete
   }
+
+  // Current agent state - included in every response for real-time state tracking
+  AgentState state = 8;
 }
 
 // Pass-through OpenCode event as JSON

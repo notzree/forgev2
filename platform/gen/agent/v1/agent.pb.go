@@ -377,7 +377,9 @@ type AgentResponse struct {
 	//	*AgentResponse_Event
 	//	*AgentResponse_Error
 	//	*AgentResponse_Complete
-	Payload       isAgentResponse_Payload `protobuf_oneof:"payload"`
+	Payload isAgentResponse_Payload `protobuf_oneof:"payload"`
+	// Current agent state - included in every response for real-time state tracking
+	State         AgentState `protobuf:"varint,8,opt,name=state,proto3,enum=agent.v1.AgentState" json:"state,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -472,6 +474,13 @@ func (x *AgentResponse) GetComplete() *CompletePayload {
 		}
 	}
 	return nil
+}
+
+func (x *AgentResponse) GetState() AgentState {
+	if x != nil {
+		return x.State
+	}
+	return AgentState_AGENT_STATE_UNSPECIFIED
 }
 
 type isAgentResponse_Payload interface {
@@ -891,7 +900,7 @@ const file_agent_v1_agent_proto_rawDesc = "" +
 	"\x18SetPermissionModeRequest\x12\x12\n" +
 	"\x04mode\x18\x01 \x01(\tR\x04mode\"'\n" +
 	"\x0fSetModelRequest\x12\x14\n" +
-	"\x05model\x18\x01 \x01(\tR\x05model\"\xa1\x02\n" +
+	"\x05model\x18\x01 \x01(\tR\x05model\"\xcd\x02\n" +
 	"\rAgentResponse\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tR\trequestId\x12\x1d\n" +
@@ -901,7 +910,8 @@ const file_agent_v1_agent_proto_rawDesc = "" +
 	"\ttimestamp\x18\x04 \x01(\x03R\ttimestamp\x12.\n" +
 	"\x05event\x18\x05 \x01(\v2\x16.agent.v1.EventPayloadH\x00R\x05event\x12.\n" +
 	"\x05error\x18\x06 \x01(\v2\x16.agent.v1.ErrorPayloadH\x00R\x05error\x127\n" +
-	"\bcomplete\x18\a \x01(\v2\x19.agent.v1.CompletePayloadH\x00R\bcompleteB\t\n" +
+	"\bcomplete\x18\a \x01(\v2\x19.agent.v1.CompletePayloadH\x00R\bcomplete\x12*\n" +
+	"\x05state\x18\b \x01(\x0e2\x14.agent.v1.AgentStateR\x05stateB\t\n" +
 	"\apayload\"L\n" +
 	"\fEventPayload\x12\x1d\n" +
 	"\n" +
@@ -978,18 +988,19 @@ var file_agent_v1_agent_proto_depIdxs = []int32{
 	7,  // 4: agent.v1.AgentResponse.event:type_name -> agent.v1.EventPayload
 	8,  // 5: agent.v1.AgentResponse.error:type_name -> agent.v1.ErrorPayload
 	9,  // 6: agent.v1.AgentResponse.complete:type_name -> agent.v1.CompletePayload
-	0,  // 7: agent.v1.GetStatusResponse.state:type_name -> agent.v1.AgentState
-	1,  // 8: agent.v1.AgentService.Connect:input_type -> agent.v1.AgentRequest
-	10, // 9: agent.v1.AgentService.GetStatus:input_type -> agent.v1.GetStatusRequest
-	12, // 10: agent.v1.AgentService.Shutdown:input_type -> agent.v1.ShutdownRequest
-	6,  // 11: agent.v1.AgentService.Connect:output_type -> agent.v1.AgentResponse
-	11, // 12: agent.v1.AgentService.GetStatus:output_type -> agent.v1.GetStatusResponse
-	13, // 13: agent.v1.AgentService.Shutdown:output_type -> agent.v1.ShutdownResponse
-	11, // [11:14] is the sub-list for method output_type
-	8,  // [8:11] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	0,  // 7: agent.v1.AgentResponse.state:type_name -> agent.v1.AgentState
+	0,  // 8: agent.v1.GetStatusResponse.state:type_name -> agent.v1.AgentState
+	1,  // 9: agent.v1.AgentService.Connect:input_type -> agent.v1.AgentRequest
+	10, // 10: agent.v1.AgentService.GetStatus:input_type -> agent.v1.GetStatusRequest
+	12, // 11: agent.v1.AgentService.Shutdown:input_type -> agent.v1.ShutdownRequest
+	6,  // 12: agent.v1.AgentService.Connect:output_type -> agent.v1.AgentResponse
+	11, // 13: agent.v1.AgentService.GetStatus:output_type -> agent.v1.GetStatusResponse
+	13, // 14: agent.v1.AgentService.Shutdown:output_type -> agent.v1.ShutdownResponse
+	12, // [12:15] is the sub-list for method output_type
+	9,  // [9:12] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_agent_v1_agent_proto_init() }

@@ -34,6 +34,9 @@ type Payload struct {
 	Timestamp time.Time `json:"timestamp"`
 	IsFinal   bool      `json:"is_final,omitempty"`
 
+	// Current agent state: "idle", "processing", "error"
+	AgentState string `json:"agent_state,omitempty"`
+
 	// For agent.event - raw OpenCode event (pass-through)
 	// Consumers should use @opencode-ai/sdk types to parse this
 	Event json.RawMessage `json:"event,omitempty"`

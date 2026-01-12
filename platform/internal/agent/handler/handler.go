@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	corev1 "k8s.io/api/core/v1"
 
+	agentv1 "github.com/forge/platform/gen/agent/v1"
 	"github.com/forge/platform/internal/agent/processor"
 	"github.com/forge/platform/internal/errors"
 )
@@ -50,6 +51,14 @@ type AgentResponse struct {
 	Phase     corev1.PodPhase `json:"phase"`
 	Ready     bool            `json:"ready"`
 	CreatedAt string          `json:"created_at,omitempty"`
+
+	// Agent internal state (populated when refresh=true)
+	SessionID      string `json:"session_id,omitempty"`
+	State          string `json:"state,omitempty"` // "idle", "processing", "error"
+	LatestSeq      uint64 `json:"latest_seq,omitempty"`
+	CurrentModel   string `json:"current_model,omitempty"`
+	PermissionMode string `json:"permission_mode,omitempty"`
+	UptimeMs       uint64 `json:"uptime_ms,omitempty"`
 }
 
 // ListAgentsResponse is the response for listing agents
@@ -175,12 +184,33 @@ func (h *Handler) Get(c echo.Context) error {
 
 	// Optionally fetch real-time status from the agent via RPC
 	if c.QueryParam("refresh") == "true" && resp.Ready {
-		// GetStatus validates the agent is responsive
-		// Status response can be used for additional fields in the future
-		_, _ = h.processor.GetStatus(ctx, userID, agentID)
+		status, err := h.processor.GetStatus(ctx, userID, agentID)
+		if err == nil {
+			resp.SessionID = status.SessionId
+			resp.State = agentStateToString(status.State)
+			resp.LatestSeq = uint64(status.LatestSeq)
+			resp.CurrentModel = status.CurrentModel
+			resp.PermissionMode = status.PermissionMode
+			resp.UptimeMs = uint64(status.UptimeMs)
+		}
+		// If GetStatus fails, we still return the pod info without agent state
 	}
 
 	return c.JSON(http.StatusOK, resp)
+}
+
+// agentStateToString converts the protobuf AgentState enum to a human-readable string
+func agentStateToString(state agentv1.AgentState) string {
+	switch state {
+	case agentv1.AgentState_AGENT_STATE_IDLE:
+		return "idle"
+	case agentv1.AgentState_AGENT_STATE_PROCESSING:
+		return "processing"
+	case agentv1.AgentState_AGENT_STATE_ERROR:
+		return "error"
+	default:
+		return "unknown"
+	}
 }
 
 // Delete handles DELETE /api/v1/agents/:id

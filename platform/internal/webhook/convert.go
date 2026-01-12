@@ -16,11 +16,12 @@ func AgentResponseToPayload(resp *agentv1.AgentResponse, agentID, requestID stri
 	}
 
 	base := Payload{
-		AgentID:   agentID,
-		RequestID: requestID,
-		SessionID: resp.GetSessionId(),
-		Seq:       resp.GetSeq(),
-		Timestamp: timestamp,
+		AgentID:    agentID,
+		RequestID:  requestID,
+		SessionID:  resp.GetSessionId(),
+		Seq:        resp.GetSeq(),
+		Timestamp:  timestamp,
+		AgentState: agentStateToString(resp.GetState()),
 	}
 
 	switch payload := resp.GetPayload().(type) {
@@ -107,5 +108,19 @@ func ErrorToPayload(agentID, requestID string, seq uint64, errorCode, message st
 			Message:     message,
 			Recoverable: recoverable,
 		},
+	}
+}
+
+// agentStateToString converts the protobuf AgentState enum to a human-readable string
+func agentStateToString(state agentv1.AgentState) string {
+	switch state {
+	case agentv1.AgentState_AGENT_STATE_IDLE:
+		return "idle"
+	case agentv1.AgentState_AGENT_STATE_PROCESSING:
+		return "processing"
+	case agentv1.AgentState_AGENT_STATE_ERROR:
+		return "error"
+	default:
+		return "unknown"
 	}
 }
