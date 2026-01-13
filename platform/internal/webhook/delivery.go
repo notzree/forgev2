@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -33,11 +34,11 @@ var RetryDelays = []time.Duration{
 
 // DeliveryService handles webhook delivery with retries and circuit breaker
 type DeliveryService struct {
-	client     *http.Client
-	logger     *zap.Logger
-	queries    *sqlc.Queries
-	pool       *pgxpool.Pool
-	cfg        *config.Config
+	client  *http.Client
+	logger  *zap.Logger
+	queries *sqlc.Queries
+	pool    *pgxpool.Pool
+	cfg     *config.Config
 
 	// Circuit breaker state (in-memory, per webhook URL)
 	circuitMu     sync.RWMutex
@@ -142,7 +143,17 @@ func (s *DeliveryService) deliverOnce(ctx context.Context, webhookCfg Config, pa
 		}
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, webhookCfg.URL, bytes.NewReader(body))
+	// Add Vercel bypass token if configured
+	webhookURL := webhookCfg.URL
+	if s.cfg.VercelBypassToken != "" {
+		if strings.Contains(webhookURL, "?") {
+			webhookURL += "&bypass_token=" + s.cfg.VercelBypassToken
+		} else {
+			webhookURL += "?bypass_token=" + s.cfg.VercelBypassToken
+		}
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, webhookURL, bytes.NewReader(body))
 	if err != nil {
 		return DeliveryResult{
 			Success: false,

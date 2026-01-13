@@ -32,6 +32,7 @@ type Config struct {
 	WebhookMaxRetries       int           `env:"WEBHOOK_MAX_RETRIES" envDefault:"5"`
 	WebhookCircuitThreshold int           `env:"WEBHOOK_CIRCUIT_THRESHOLD" envDefault:"5"`
 	WebhookCircuitTimeout   time.Duration `env:"WEBHOOK_CIRCUIT_TIMEOUT" envDefault:"60s"`
+	VercelBypassToken       string        `env:"VERCEL_BYPASS_TOKEN"`
 }
 
 // New creates a new Config from environment variables
